@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <stddef.h>
+#include <stdio.h> 
 
 typedef enum GameState {
     MENU = 0,
@@ -14,9 +15,8 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "BombParty");
 
-    // --- Font Loading with Fallback ---
     Font customFont = LoadFontEx("../../resources/fonts/Montserrat-Regular.ttf", 40, NULL, 0);
-    Font textFont; 
+    Font textFont;
 
     if (customFont.texture.id == 0)
     {
@@ -28,34 +28,34 @@ int main(void)
         TraceLog(LOG_INFO, "Successfully loaded font: ../../resources/fonts/Montserrat-Regular.ttf");
         textFont = customFont;
     }
-    // ---------------------------------
 
-    // --- Texture Loading ---
-    Texture2D bombTexture;
-    Texture2D sparkTexture;
-    Texture2D arrowTexture;
+    Texture2D bombTexture = { 0 }; 
+    Texture2D sparkTexture = { 0 }; 
+    Texture2D arrowTexture = { 0 }; 
 
-    Image bombImage = LoadImage("../../resources/textures/bomb.png"); 
+    Image bombImage = LoadImage("../../resources/textures/bomb.png");
     Image sparkImage = LoadImage("../../resources/textures/spark.png");
     Image arrowImage = LoadImage("../../resources/textures/arrow.png");
 
     if (bombImage.data == NULL || sparkImage.data == NULL || arrowImage.data == NULL)
     {
-         TraceLog(LOG_ERROR, "Failed to load one or more images!");
+          TraceLog(LOG_ERROR, "Failed to load one or more images!");
     }
     else
     {
-        bombTexture = LoadTextureFromImage(bombImage); 
+        bombTexture = LoadTextureFromImage(bombImage);
         sparkTexture = LoadTextureFromImage(sparkImage);
         arrowTexture = LoadTextureFromImage(arrowImage);
 
-        UnloadImage(bombImage); 
+        UnloadImage(bombImage);
         UnloadImage(sparkImage);
         UnloadImage(arrowImage);
     }
-    // -----------------------
 
     GameState currentGameState = MENU;
+
+    float bombTimer = 0.0f;
+    float initialBombTime = 30.0f;
 
     SetTargetFPS(60);
 
@@ -68,26 +68,35 @@ int main(void)
                 if (IsKeyPressed(KEY_ONE))
                 {
                     currentGameState = PLAYING;
-                    // TODO: Inicializar variaveis do jogo (timer, jogadores, etc.)
+                    // TODO: Inicializar outras variaveis do jogo (jogadores, silaba, etc.)
+                    bombTimer = initialBombTime; 
                 }
 
             } break;
 
             case PLAYING:
             {
-                // Logica de Update para o Jogo:
-                // - Atualizar timer da bomba
-                // - Processar input do jogador (digitacao)
-                // - Checar regras do jogo (palavra valida, passar a bomba)
-                // - Verificar condicoes de fim de jogo (timer esgotou, jogador eliminado)
+                bombTimer -= GetFrameTime();
 
-                if (IsKeyPressed(KEY_TWO))
+                if (bombTimer <= 0.0f)
                 {
+                    bombTimer = 0.0f; 
                     currentGameState = GAME_OVER;
-                     // TODO: Salvar pontuacao final ou preparar tela de Game Over
+                    TraceLog(LOG_INFO, "Bomb exploded! Game Over.");
                 }
 
-                // TODO: Implementar logica do timer e explosao da bomba, que tambem leva a GAME_OVER
+
+                // - Processar input do jogador (digitacao)
+                // - Checar regras do jogo (palavra valida, passar a bomba)
+                // - Verificar condicoes de fim de jogo (jogador eliminado - que tambem leva a GAME_OVER)
+
+
+                // Exemplo de como mudar para GAME_OVER com outra tecla para teste
+                // if (IsKeyPressed(KEY_TWO))
+                // {
+                //    currentGameState = GAME_OVER;
+                //     // TODO: Salvar pontuacao final ou preparar tela de Game Over
+                // }
 
             } break;
 
@@ -95,8 +104,8 @@ int main(void)
             {
                 if (IsKeyPressed(KEY_THREE))
                 {
-                    currentGameState = MENU; 
-                    // TODO: Reinicializar todas as variaveis do jogo para comecar de novo
+                    currentGameState = MENU;
+                    // TODO: Reinicializar todas as variaveis do jogo para comecar de novo (incluindo bombTimer se não inicializar no MENU->PLAYING)
                 }
 
             } break;
@@ -104,8 +113,6 @@ int main(void)
             default: break;
         }
 
-        // Draw
-        //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
@@ -116,18 +123,19 @@ int main(void)
                 {
                     DrawTextEx(textFont, "Bomb Party", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, screenHeight/3}, 40, 0, GRAY);
                     DrawTextEx(textFont, "Pressione 1 para Comecar", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Pressione 1 para Comecar", 20, 0).x/2, screenHeight/2}, 20, 0, DARKGRAY);
-                     // You might also draw images/textures here if part of the menu background etc.
-
                 } break;
 
                 case PLAYING:
                 {
                     DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK);
-                    // TODO: Desenhar elementos do jogo (timer, silaba, input, bomba(bombTexture), jogadores)
-                     if (bombTexture.id != 0)
-                     {
-                         DrawTexture(bombTexture, 100, 100, WHITE);
-                     }
+                    // TODO: Desenhar outros elementos do jogo (silaba, input, jogadores)
+
+                    DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 10.0f ? RED : DARKGRAY)); // Exemplo: fica vermelho nos ultimos 10s
+
+                    if (bombTexture.id != 0)
+                    {
+                         DrawTexture(bombTexture, screenWidth/2 - bombTexture.width/2, screenHeight/2 - bombTexture.height/2, WHITE);
+                    }
 
 
                 } break;
@@ -136,8 +144,6 @@ int main(void)
                 {
                     DrawTextEx(textFont, "Fim de Jogo!", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Fim de Jogo!", 40, 0).x/2, screenHeight/3}, 40, 0, DARKGRAY);
                     DrawTextEx(textFont, "Pressione 3 para Reiniciar", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Pressione 3 para Reiniciar", 20, 0).x/2, screenHeight/2}, 20, 0, GRAY);
-                    // TODO: Desenhar pontuacao final
-
                 } break;
 
                 default: break;
@@ -146,16 +152,12 @@ int main(void)
             DrawFPS(10, screenHeight - 20);
 
         EndDrawing();
-        //----------------------------------------------------------------------------------
     }
 
-    // De-Initialization
-    //--------------------------------------------------------------------------------------
-
     // --- Unload Resources ---
-    if (customFont.texture.id != 0)
+    if (customFont.texture.id != 0 && textFont.texture.id != GetFontDefault().texture.id) // Unload only if custom font was successfully loaded and is not the default
     {
-        UnloadFont(customFont); 
+        UnloadFont(customFont);
     }
 
     // Unload Textures from GPU memory (only if they were successfully loaded)
@@ -164,7 +166,6 @@ int main(void)
     if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
 
     CloseWindow();
-    //--------------------------------------------------------------------------------------
 
     return 0;
 }
