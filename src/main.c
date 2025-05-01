@@ -18,6 +18,10 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "BombParty");
 
+    Imgage bomb = LoadImage("../resources/textures/bomb.png");
+    Imgage spark = LoadImage("../resources/textures/spark.png");
+    Imgage arrow = LoadImage("../resources/textures/arrow.png");
+
     SetTargetFPS(60); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
