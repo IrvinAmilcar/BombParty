@@ -206,3 +206,136 @@ int main(void)
     return 0;
 }
 //---------------------------------------------------------------
+
+// implementacao das func()
+//---------------------------------------------------------------
+WordList LoadWordList(const char *filePath) {
+    WordList list = { NULL, 0 };
+    FILE* file = fopen(filePath, "r");
+
+    if (file == NULL) {
+        TraceLog(LOG_ERROR, TextFormat("Failed to open word list file: %s", filePath));
+        return list;
+    }
+
+    char line[MAX_WORD_LENGTH];
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        size_t len = strlen(line);
+        if (len > 0 && line[len - 1] == '\n') {
+            line[len - 1] = '\0';
+        }
+         if (len > 0 && line[len - 1] == '\r') {
+            line[len - 1] = '\0';
+        }
+
+        if (strlen(line) > 1) {
+             list.count++;
+        }
+    }
+
+    fseek(file, 0, SEEK_SET);
+
+    list.words = (char**)malloc(list.count * sizeof(char*));
+    if (list.words == NULL) {
+        TraceLog(LOG_ERROR, "Failed to allocate memory for word list pointers.");
+        fclose(file);
+        list.count = 0;
+        return list;
+    }
+
+    int i = 0;
+
+    while (fgets(line, sizeof(line), file) != NULL && i < list.count) {
+        size_t len = strlen(line);
+        if (len > 0 && line[len - 1] == '\n') {
+            line[len - 1] = '\0';
+        }
+         if (len > 0 && line[len - 1] == '\r') {
+            line[len - 1] = '\0';
+        }
+
+         if (strlen(line) > 1) {
+            list.words[i] = (char*)malloc((strlen(line) + 1) * sizeof(char));
+            if (list.words[i] == NULL) {
+                TraceLog(LOG_ERROR, TextFormat("Failed to allocate memory for word '%s'", line));
+                // TODO: Lidar com erro de alocação interna (liberar o que já foi alocado)
+                // Por simplicidade aqui, vamos apenas logar e continuar, mas o ideal é tratar melhor
+                i++; // Incrementa mesmo com erro para evitar loop infinito, mas a palavra estará NULL
+                continue;
+            }
+            strcpy(list.words[i], line);
+            i++;
+        }
+    }
+
+    list.count = i;
+
+    fclose(file);
+    TraceLog(LOG_INFO, TextFormat("Successfully loaded %d words from %s", list.count, filePath));
+
+    return list;
+}
+
+void UnloadWordList(WordList *list) {
+    if (list == NULL || list->words == NULL) return;
+
+    for (int i = 0; i < list->count; i++) {
+        free(list->words[i]); 
+        list->words[i] = NULL; 
+    }
+    free(list->words);
+    list->words = NULL;
+    list->count = 0;
+    TraceLog(LOG_INFO, "Word list unloaded.");
+}
+
+const char* SelectRandomSyllable(const WordList* list) {
+    if (list == NULL || list->words == NULL || list->count == 0) {
+        TraceLog(LOG_WARNING, "Word list is empty or not loaded.");
+        return "err"; 
+    }
+
+    const char* selectedWord = NULL;
+    int wordLength = 0;
+    int tries = 0;
+    const int maxTries = 100;
+
+    while (selectedWord == NULL && tries < maxTries) {
+        int wordIndex = GetRandomValue(0, list->count - 1);
+        selectedWord = list->words[wordIndex];
+        wordLength = (selectedWord != NULL) ? strlen(selectedWord) : 0;
+
+        if (wordLength < MIN_SYLLABLE_LENGTH) {
+             selectedWord = NULL;
+        }
+        tries++;
+    }
+
+    if (selectedWord == NULL) {
+         TraceLog(LOG_WARNING, TextFormat("Could not find a word long enough (min length %d) after %d tries.", MIN_SYLLABLE_LENGTH, maxTries));
+         return "fail"; 
+    }
+
+    int syllableLength;
+    int startIndex;
+
+    if (wordLength < MAX_SYLLABLE_LENGTH) {
+        syllableLength = MIN_SYLLABLE_LENGTH;
+    } else {
+        syllableLength = GetRandomValue(MIN_SYLLABLE_LENGTH, MAX_SYLLABLE_LENGTH);
+    }
+
+    int maxStartIndex = wordLength - syllableLength;
+    startIndex = GetRandomValue(0, maxStartIndex);
+
+    static char randomSyllable[MAX_SYLLABLE_LENGTH + 1];
+    strncpy(randomSyllable, selectedWord + startIndex, syllableLength);
+    randomSyllable[syllableLength] = '\0';
+
+    TraceLog(LOG_INFO, TextFormat("Selected word: '%s' (len %d), Syllable: '%s' (start: %d, len: %d)", selectedWord, wordLength, randomSyllable, startIndex, syllableLength));
+
+
+    return randomSyllable;
+}
+//---------------------------------------------------------------
