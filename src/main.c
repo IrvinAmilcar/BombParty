@@ -1,15 +1,30 @@
+// includes
+//---------------------------------------------------------------
 #include "raylib.h"
 #include <stddef.h>
 #include <stdio.h> 
+//---------------------------------------------------------------
 
+// structs
+//---------------------------------------------------------------
 typedef enum GameState {
     MENU = 0,
     PLAYING,
     GAME_OVER
 } GameState;
+//---------------------------------------------------------------
 
+//iniciações dos structs se precisar
+//---------------------------------------------------------------
+//
+//---------------------------------------------------------------
+
+// ponto de entrada principal
+//---------------------------------------------------------------
 int main(void)
 {
+    // inicialização
+    //---------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
@@ -58,7 +73,10 @@ int main(void)
     float initialBombTime = 30.0f;
 
     SetTargetFPS(60);
+    //---------------------------------------------------------------
 
+    // loop principal do game
+    //---------------------------------------------------------------
     while (!WindowShouldClose())
     {
         switch (currentGameState)
@@ -76,6 +94,7 @@ int main(void)
 
             case PLAYING:
             {
+                
                 bombTimer -= GetFrameTime();
 
                 if (bombTimer <= 0.0f)
@@ -89,14 +108,6 @@ int main(void)
                 // - Processar input do jogador (digitacao)
                 // - Checar regras do jogo (palavra valida, passar a bomba)
                 // - Verificar condicoes de fim de jogo (jogador eliminado - que tambem leva a GAME_OVER)
-
-
-                // Exemplo de como mudar para GAME_OVER com outra tecla para teste
-                // if (IsKeyPressed(KEY_TWO))
-                // {
-                //    currentGameState = GAME_OVER;
-                //     // TODO: Salvar pontuacao final ou preparar tela de Game Over
-                // }
 
             } break;
 
@@ -113,6 +124,8 @@ int main(void)
             default: break;
         }
 
+        // desenho
+        //---------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
@@ -152,6 +165,7 @@ int main(void)
             DrawFPS(10, screenHeight - 20);
 
         EndDrawing();
+        //---------------------------------------------------------------
     }
 
     // --- Unload Resources ---
@@ -169,3 +183,4 @@ int main(void)
 
     return 0;
 }
+//---------------------------------------------------------------
