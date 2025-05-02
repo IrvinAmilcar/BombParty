@@ -258,11 +258,21 @@ WordList LoadWordList(const char *filePath) {
          if (strlen(line) > 1) {
             list.words[i] = (char*)malloc((strlen(line) + 1) * sizeof(char));
             if (list.words[i] == NULL) {
-                TraceLog(LOG_ERROR, TextFormat("Failed to allocate memory for word '%s'", line));
-                // TODO: Lidar com erro de alocação interna (liberar o que já foi alocado)
-                // Por simplicidade aqui, vamos apenas logar e continuar, mas o ideal é tratar melhor
-                i++; // Incrementa mesmo com erro para evitar loop infinito, mas a palavra estará NULL
-                continue;
+                TraceLog(LOG_ERROR, TextFormat("Failed to allocate memory for word '%s' (index %d). Cleaning up previously allocated memory.", line, i));
+
+                for(int j = 0; j < i; ++j) {
+                    free(list.words[j]);
+                    list.words[j] = NULL;
+                }
+
+                free(list.words);
+                list.words = NULL; 
+
+                list.count = 0; 
+
+                fclose(file); 
+
+                return list;
             }
             strcpy(list.words[i], line);
             i++;
