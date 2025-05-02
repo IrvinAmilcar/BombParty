@@ -84,7 +84,7 @@ int main(void)
     GameState currentGameState = MENU;
 
     float bombTimer = 0.0f;
-    float initialBombTime = 30.0f;
+    float initialBombTime = 15.0f;
 
     SetTargetFPS(60);
     //---------------------------------------------------------------
@@ -157,11 +157,19 @@ int main(void)
                     DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK);
                     // TODO: Desenhar outros elementos do jogo (silaba, input, jogadores)
 
-                    DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 10.0f ? RED : DARKGRAY)); // Exemplo: fica vermelho nos ultimos 10s
+                    DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY)); // Exemplo: fica vermelho nos ultimos 10s
 
+                    if (arrowTexture.id != 0)
+                    {
+                         DrawTexture(arrowTexture, screenWidth/2 - arrowTexture.width/2, screenHeight/2 - arrowTexture.height/2, WHITE);
+                    }
                     if (bombTexture.id != 0)
                     {
-                         DrawTexture(bombTexture, screenWidth/2 - bombTexture.width/2, screenHeight/2 - bombTexture.height/2, WHITE);
+                        DrawTexture(bombTexture, screenWidth/2 - bombTexture.width/2, screenHeight/2 - bombTexture.height/2, WHITE);
+                    }
+                    if (sparkTexture.id != 0)
+                    {
+                         DrawTexture(sparkTexture, screenWidth/2 - sparkTexture.width/2, screenHeight/2 - sparkTexture.height/2, WHITE);
                     }
 
 
