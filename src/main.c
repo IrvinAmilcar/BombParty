@@ -12,11 +12,25 @@ typedef enum GameState {
     PLAYING,
     GAME_OVER
 } GameState;
+
+typedef struct {
+    char **words;
+    int count;
+} WordList;
 //---------------------------------------------------------------
 
-//iniciações dos structs se precisar
+// Prototipos das func()
 //---------------------------------------------------------------
-//
+WordList LoadWordList(const char *filePath);
+void UnloadWordList(WordList *list);
+const char *SelectRandomSyllable(const WordList *list);
+//---------------------------------------------------------------
+
+// constantes
+//---------------------------------------------------------------
+#define MAX_WORD_LENGH 64
+#define MAX_SYLLABLE_LENGH 3
+#define MIN_SYLLABLE_LENGH 1
 //---------------------------------------------------------------
 
 // ponto de entrada principal
