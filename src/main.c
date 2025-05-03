@@ -1,4 +1,5 @@
 #include "raylib.h"
+// fiz besteira com essa libkkkkkkkkkkkk foi mal dps ajeitoo
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 #include "resource_dir.h"
@@ -391,3 +392,5 @@ const char* SelectRandomSyllable(const WordList* list) {
 
     return randomSyllable;
 }
+
+
