@@ -1,11 +1,15 @@
 // includes
 //---------------------------------------------------------------
 #include "raylib.h"
+#include "resource_dir.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
 #include <time.h>   
+
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
 //---------------------------------------------------------------
 
 // structs
@@ -34,6 +38,7 @@ const char *SelectRandomSyllable(const WordList *list);
 #define MAX_WORD_LENGTH 64
 #define MAX_SYLLABLE_LENGTH 3
 #define MIN_SYLLABLE_LENGTH 2 
+#define MAX_PLAYER_INPUT_CHARS 30
 //---------------------------------------------------------------
 
 
@@ -214,17 +219,17 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "BombParty");
 
-    Font customFont = LoadFontEx("../../resources/fonts/Montserrat-Regular.ttf", 40, NULL, 0);
+    Font customFont = LoadFontEx("resources/fonts/Montserrat-Regular.ttf", 40, NULL, 0);
     Font textFont;
 
     if (customFont.texture.id == 0)
     {
-        TraceLog(LOG_WARNING, "Failed to load font: ../../resources/fonts/Montserrat-Regular.ttf. Using default font.");
+        TraceLog(LOG_WARNING, "Failed to load font: resources/fonts/Montserrat-Regular.ttf. Using default font.");
         textFont = GetFontDefault();
     }
     else
     {
-        TraceLog(LOG_INFO, "Successfully loaded font: ../../resources/fonts/Montserrat-Regular.ttf");
+        TraceLog(LOG_INFO, "Successfully loaded font: resources/fonts/Montserrat-Regular.ttf");
         textFont = customFont;
     }
 
@@ -232,29 +237,24 @@ int main(void)
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
 
-    Image bombImage = LoadImage("../../resources/textures/bomb.png");
-    Image sparkImage = LoadImage("../../resources/textures/spark.png");
-    Image arrowImage = LoadImage("../../resources/textures/arrow.png");
+    Texture bombTexture = LoadTexture("textures/bomb.png");
+    Texture sparkTexture = LoadTexture("textures/spark.png");
+    Texture arrowTexture = LoadTexture("textures/arrow.png");
 
-    if (bombImage.data == NULL || sparkImage.data == NULL || arrowImage.data == NULL)
+    if (bombTexture.id == 0 || sparkTexture.id == 0 || arrowTexture.id == 0)
     {
-         TraceLog(LOG_ERROR, "Failed to load one or more images!");
-         // TODO: Lidar com falha no carregamento de assets (talvez sair ou mostrar tela de erro)
-    }
-    else
-    {
-        bombTexture = LoadTextureFromImage(bombImage);
-        sparkTexture = LoadTextureFromImage(sparkImage);
-        arrowTexture = LoadTextureFromImage(arrowImage);
-
-        UnloadImage(bombImage);
-        UnloadImage(sparkImage);
-        UnloadImage(arrowImage);
+        TraceLog(LOG_ERROR, "Failed to load one or more textures!");
+    } else {
+        TraceLog(LOG_INFO, "Successfully loaded textures.");
     }
 
-    WordList wordList = LoadWordList("../../resources/data/palavras.txt");
+    WordList wordList = { NULL, 0 };
+    WordList wordList = LoadWordList("resources/data/palavras.txt");
 
     const char* currentSyllable = NULL;
+
+    char playerInput[MAX_PLAYER_INPUT_CHARS + 1] = { 0 };
+    bool playerInputEditMode = false;
 
     GameState currentGameState = MENU;
 
@@ -280,7 +280,6 @@ int main(void)
                     menuText = TextFormat("Pressione 1 para Comecar%s", wordCountText);
                 } else {
                     menuText = "Erro: Lista de palavras nao carregada!";
-                    // Opcional: Desabilitar o inicio do jogo se a lista não carregar
                 }
 
 
@@ -294,7 +293,6 @@ int main(void)
                         TraceLog(LOG_INFO, TextFormat("Game started with syllable: %s", currentSyllable));
                     } else {
                         TraceLog(LOG_ERROR, "Cannot start game: Word list not loaded or empty.");
-                        // Opcional: Não mudar de estado ou mostrar mensagem de erro na tela
                     }
                     // --- FIM INICIALIZAÇÃO DO JOGO ---
                 }
@@ -315,22 +313,22 @@ int main(void)
                     bombTimer = 0.0f;
                     currentGameState = GAME_OVER;
                     TraceLog(LOG_INFO, "Bomb exploded! Game Over.");
+                    playerInputEditMode = false;
                      // TODO: Limpar a sílaba atual se ela fosse alocada dinamicamente (com a versão estática, não precisa liberar)
-                     // currentSyllable = NULL; // Opcional, apenas para indicar que não há sílaba ativa
+                    currentSyllable = NULL; // Opcional, apenas para indicar que não há sílaba ativa
                 }
 
 
-                // - Processar input do jogador (digitacao)
-                // - Checar regras do jogo (palavra valida, passar a bomba)
-                // - Verificar condicoes de fim de jogo (jogador eliminado - que tambem leva a GAME_OVER)
+                // - TODO: Processar input do jogador (digitacao)
+                // - TODO: Checar regras do jogo (palavra valida, passar a bomba)
+                // - TODO: Verificar condicoes de fim de jogo (jogador eliminado - que tambem leva a GAME_OVER)
 
 
                 // Exemplo de como mudar para GAME_OVER com outra tecla para teste (pode remover depois)
-                 if (IsKeyPressed(KEY_TWO))
-                 {
-                  currentGameState = GAME_OVER;
-                  // TODO: Salvar pontuacao final ou preparar tela de Game Over
-                 }
+                if (IsKeyPressed(KEY_TWO))
+                {
+                    currentGameState = GAME_OVER;
+                }
 
             } break;
 
