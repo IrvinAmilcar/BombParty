@@ -70,11 +70,10 @@ int main(void)
     }
 
     WordList wordList = { NULL, 0 };
-    wordList = LoadWordList("resources/data/palavras_limpas.txt");
+    wordList = LoadWordList("resources/data/palavras.txt");
 
     const char* currentSyllable = NULL;
 
-    // Raygui: Buffer e estado para o campo de input do jogador
     char playerInput[MAX_PLAYER_INPUT_CHARS + 1] = { 0 };
     bool playerInputEditMode = false;
 
