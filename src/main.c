@@ -190,15 +190,15 @@ int main(void)
                          // }
                     }
 
-                    float arrowScale = 0.7f;
+                    float arrowScale = 0.6f;
                     float arrowRotation = 0.0f;
 
                     Vector2 arrowPosition = {
                         screenHeight/2 - (arrowTexture.width * arrowScale)/2,
-                        (screenWidth/2 - 60) - (arrowTexture.height * arrowScale) / 2
+                        screenWidth/2 - (arrowTexture.height * arrowScale)/ 2
                     };
 
-                    float bombScale = 0.5f;
+                    float bombScale = 0.4f;
                     float bombRotation = 0.0f;
                     
                     Vector2 bombPosition = {
@@ -206,17 +206,17 @@ int main(void)
                         (screenWidth/2 - 60) - (bombTexture.height * bombScale) / 2
                     };
 
-                    float sparkScale = 0.2f;
+                    float sparkScale = 0.1f;
                     float sparkRotation = 0.0f;
 
                     Vector2 sparkPosition = {
-                        screenWidth/2 - (sparkTexture.width * sparkScale) / 2,
+                        screenWidth/2 - (sparkTexture.width * sparkScale) / 4,
                         (screenHeight/2 - 60) - (sparkTexture.height * sparkScale) / 2
                     };
 
                     if (arrowTexture.id != 0) DrawTextureEx(arrowTexture, arrowPosition, arrowRotation, arrowScale, WHITE);
-                    if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
-                    if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
+                    // if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
+                    // if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
 
