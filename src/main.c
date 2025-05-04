@@ -114,7 +114,6 @@ int main(void)
                     bombTimer = 0.0f;
                     currentGameState = GAME_OVER;
                     TraceLog(LOG_INFO, "Bomb exploded! Game Over.");
-                    // Raygui: Desativa o modo de edição ao sair do estado PLAYING
                     playerInputEditMode = false;
                     currentSyllable = NULL;
                 }
@@ -146,17 +145,17 @@ int main(void)
             {
                 case MENU:
                 {
-                     const char* menuText = "Pressione 1 para Comecar";
-                     char wordCountText[64];
+                    const char* menuText = "Pressione 1 para Comecar";
+                    char wordCountText[64];
 
-                     if (wordList.count > 0) {
-                         snprintf(wordCountText, sizeof(wordCountText), " (%d palavras carregadas)", wordList.count);
-                         menuText = TextFormat("Pressione 1 para Comecar%s", wordCountText);
-                     } else {
-                         menuText = "Erro: Lista de palavras nao carregada!";
+                    if (wordList.count > 0) {
+                        snprintf(wordCountText, sizeof(wordCountText), " (%d palavras carregadas)", wordList.count);
+                        menuText = TextFormat("Pressione 1 para Comecar%s", wordCountText);
+                    } else {
+                        menuText = "Erro: Lista de palavras nao carregada!";
                      }
-                     DrawTextEx(textFont, "Bomb Party", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, screenHeight/3}, 40, 0, GRAY);
-                     DrawTextEx(textFont, menuText, (Vector2){screenWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, screenHeight/2}, 20, 0, DARKGRAY);
+                    DrawTextEx(textFont, "Bomb Party", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, screenHeight/3}, 40, 0, GRAY);
+                    DrawTextEx(textFont, menuText, (Vector2){screenWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, screenHeight/2}, 20, 0, DARKGRAY);
 
                 } break;
 
@@ -165,8 +164,8 @@ int main(void)
                     DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK);
 
                     if (currentSyllable != NULL && wordList.count > 0) {
-                         Vector2 syllablePos = { screenWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, screenHeight/2 - 80 };
-                         DrawTextEx(textFont, currentSyllable, syllablePos, 60, 0, BLUE);
+                        Vector2 syllablePos = { screenWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, screenHeight/2 - 80 };
+                        DrawTextEx(textFont, currentSyllable, syllablePos, 60, 0, BLUE);
                     } else {
                            DrawTextEx(textFont, "Sem Silaba!", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, screenHeight/2 - 80}, 30, 0, RED);
                     }
@@ -191,9 +190,17 @@ int main(void)
                          // }
                     }
 
+                    float sparkScale = 0.2f;
+                    float sparkRotation = 0.0f;
+
+                    Vector2 sparkPosition = {
+                        screenWidth/2 - (sparkTexture.width * sparkScale) / 2,
+                        (screenHeight/2 - 60) - (sparkTexture.height * sparkScale) / 2
+                    };
+
                     if (arrowTexture.id != 0) DrawTexture(arrowTexture, screenWidth/2 - arrowTexture.width/2, screenHeight/2 - arrowTexture.height/2 + 50, WHITE);
                     if (bombTexture.id != 0) DrawTexture(bombTexture, screenWidth/2 - bombTexture.width/2, screenHeight/2 - bombTexture.height/2, WHITE);
-                    if (sparkTexture.id != 0) DrawTexture(sparkTexture, screenWidth/2 - sparkTexture.width/2, screenHeight/2 - sparkTexture.height/2 - 60, WHITE);
+                    if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
 
@@ -213,6 +220,8 @@ int main(void)
         EndDrawing();
     }
 
+    TraceLog(LOG_INFO, "Loop principal terminou. Iniciando limpeza de recursos.");
+    
     UnloadWordList(&wordList);
 
     if (customFont.texture.id != 0 && textFont.texture.id != GetFontDefault().texture.id)
