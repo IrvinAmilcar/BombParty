@@ -193,7 +193,7 @@ int main(void)
                     float arrowScale = 0.4f;
                     float arrowRotation = 0.0f;
                     
-                    //Esse calculo serve pra por um elemento no meio da tela!!
+                    //Esse calculo serve pra por um elemento no meio da tela obviamente sem o 9, aquilo foi só pra ajustar!!
                     //arrow centralizada:
                     Vector2 arrowPosition = {
                         screenWidth / 2 - (arrowTexture.width * arrowScale) / 2,
@@ -210,7 +210,8 @@ int main(void)
 
                     float sparkScale = 0.05f;
                     float sparkRotation = -30.0f * DEG2RAD;
-
+                    
+                    //Baseada na posição da bomba a faísca tem q ser movimentada manualmente!!, se o tamanho da bomba alterar a posição da faísca muda tbm!!
                     Vector2 sparkPosition = {
                         bombPosition.x + 100,
                         bombPosition.y + 5 
