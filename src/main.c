@@ -1,5 +1,4 @@
 #include "raylib.h"
-// fiz besteira com essa libkkkkkkkkkkkk foi mal dps ajeitoo
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 #include "resource_dir.h"
@@ -38,6 +37,7 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "BombParty");
 
+    // Inicialização Raygui: Carrega o estilo padrão
     GuiLoadStyleDefault();
 
     Font customFont = LoadFontEx("resources/fonts/Montserrat-Regular.ttf", 40, NULL, 0);
@@ -74,6 +74,7 @@ int main(void)
 
     const char* currentSyllable = NULL;
 
+    // Raygui: Buffer e estado para o campo de input do jogador
     char playerInput[MAX_PLAYER_INPUT_CHARS + 1] = { 0 };
     bool playerInputEditMode = false;
 
@@ -90,16 +91,6 @@ int main(void)
         {
             case MENU:
             {
-                const char* menuText = "Pressione 1 para Comecar";
-                char wordCountText[64];
-
-                if (wordList.count > 0) {
-                    snprintf(wordCountText, sizeof(wordCountText), " (%d palavras carregadas)", wordList.count);
-                    menuText = TextFormat("Pressione 1 para Comecar%s", wordCountText);
-                } else {
-                    menuText = "Erro: Lista de palavras nao carregada!";
-                }
-
                 if (IsKeyPressed(KEY_ONE) && wordList.count > 0)
                 {
                     currentGameState = PLAYING;
@@ -107,10 +98,10 @@ int main(void)
                     currentSyllable = SelectRandomSyllable(&wordList);
                     TraceLog(LOG_INFO, TextFormat("Game started with syllable: %s", currentSyllable));
 
+                    // Raygui: Ativa o modo de edição ao entrar no estado PLAYING
                     playerInputEditMode = true;
-                    playerInput[0] = '\0';
-                    GuiSetState(STATE_NORMAL);
-                    GuiLockActive();
+                    playerInput[0] = '\0'; // Limpa o buffer
+                    GuiSetState(STATE_NORMAL); // Raygui: Garante que o estado visual do controle está normal
                 }
 
             } break;
@@ -124,6 +115,7 @@ int main(void)
                     bombTimer = 0.0f;
                     currentGameState = GAME_OVER;
                     TraceLog(LOG_INFO, "Bomb exploded! Game Over.");
+                    // Raygui: Desativa o modo de edição ao sair do estado PLAYING
                     playerInputEditMode = false;
                     currentSyllable = NULL;
                 }
@@ -177,12 +169,14 @@ int main(void)
                          Vector2 syllablePos = { screenWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, screenHeight/2 - 80 };
                          DrawTextEx(textFont, currentSyllable, syllablePos, 60, 0, BLUE);
                     } else {
-                          DrawTextEx(textFont, "Sem Silaba!", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, screenHeight/2 - 80}, 30, 0, RED);
+                           DrawTextEx(textFont, "Sem Silaba!", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, screenHeight/2 - 80}, 30, 0, RED);
                     }
 
+                    // Raygui: Define a área do campo de input
                     Rectangle inputBounds = { screenWidth/2 - 150, screenHeight - 80, 300, 40 };
+                    // Raygui: Desenha o campo de input E processa o input do teclado se playerInputEditMode for true
+                    // Retorna true quando Enter é pressionado E está em modo de edição
                     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode)) {
-                         GuiUnlockActive();
                          TraceLog(LOG_INFO, TextFormat("Player submitted: '%s'", playerInput));
                          // TODO: CHAMAR LÓGICA DE VALIDAÇÃO AQUI!
                          // bool isValid = CheckWord(playerInput, currentSyllable, &wordList); // Sua função de validação
@@ -392,5 +386,3 @@ const char* SelectRandomSyllable(const WordList* list) {
 
     return randomSyllable;
 }
-
-
