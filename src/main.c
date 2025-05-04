@@ -190,33 +190,35 @@ int main(void)
                          // }
                     }
 
-                    float arrowScale = 0.6f;
+                    float arrowScale = 0.4f;
                     float arrowRotation = 0.0f;
-
+                    
+                    //Esse calculo serve pra por um elemento no meio da tela!!
+                    //arrow centralizada:
                     Vector2 arrowPosition = {
-                        screenHeight/2 - (arrowTexture.width * arrowScale)/2,
-                        screenWidth/2 - (arrowTexture.height * arrowScale)/ 2
+                        screenWidth / 2 - (arrowTexture.width * arrowScale) / 2,
+                        (screenHeight / 2 - (arrowTexture.height * arrowScale) / 2) + 9
                     };
 
-                    float bombScale = 0.4f;
+                    float bombScale = 0.3f;
                     float bombRotation = 0.0f;
                     
                     Vector2 bombPosition = {
-                        screenHeight/2 - (bombTexture.height * bombScale) / 2,
-                        (screenWidth/2 - 60) - (bombTexture.height * bombScale) / 2
+                        screenWidth / 2 - (bombTexture.width * bombScale) / 2,
+                        screenHeight / 2 - (bombTexture.height * bombScale) / 2
                     };
 
-                    float sparkScale = 0.1f;
-                    float sparkRotation = 0.0f;
+                    float sparkScale = 0.05f;
+                    float sparkRotation = -30.0f * DEG2RAD;
 
                     Vector2 sparkPosition = {
-                        screenWidth/2 - (sparkTexture.width * sparkScale) / 4,
-                        (screenHeight/2 - 60) - (sparkTexture.height * sparkScale) / 2
+                        bombPosition.x + 100,
+                        bombPosition.y + 5 
                     };
 
                     if (arrowTexture.id != 0) DrawTextureEx(arrowTexture, arrowPosition, arrowRotation, arrowScale, WHITE);
-                    // if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
-                    // if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
+                    if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
+                    if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
 
