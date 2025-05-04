@@ -153,10 +153,10 @@ int main(void)
                         menuText = TextFormat("Pressione 1 para Comecar%s", wordCountText);
                     } else {
                         menuText = "Erro: Lista de palavras nao carregada!";
-                     }
+                    }
                     DrawTextEx(textFont, "Bomb Party", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, screenHeight/3}, 40, 0, GRAY);
                     DrawTextEx(textFont, menuText, (Vector2){screenWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, screenHeight/2}, 20, 0, DARKGRAY);
-
+ 
                 } break;
 
                 case PLAYING:
@@ -190,6 +190,22 @@ int main(void)
                          // }
                     }
 
+                    float arrowScale = 0.7f;
+                    float arrowRotation = 0.0f;
+
+                    Vector2 arrowPosition = {
+                        screenHeight/2 - (arrowTexture.width * arrowScale)/2,
+                        (screenWidth/2 - 60) - (arrowTexture.height * arrowScale) / 2
+                    };
+
+                    float bombScale = 0.5f;
+                    float bombRotation = 0.0f;
+                    
+                    Vector2 bombPosition = {
+                        screenHeight/2 - (bombTexture.height * bombScale) / 2,
+                        (screenWidth/2 - 60) - (bombTexture.height * bombScale) / 2
+                    };
+
                     float sparkScale = 0.2f;
                     float sparkRotation = 0.0f;
 
@@ -198,8 +214,8 @@ int main(void)
                         (screenHeight/2 - 60) - (sparkTexture.height * sparkScale) / 2
                     };
 
-                    if (arrowTexture.id != 0) DrawTexture(arrowTexture, screenWidth/2 - arrowTexture.width/2, screenHeight/2 - arrowTexture.height/2 + 50, WHITE);
-                    if (bombTexture.id != 0) DrawTexture(bombTexture, screenWidth/2 - bombTexture.width/2, screenHeight/2 - bombTexture.height/2, WHITE);
+                    if (arrowTexture.id != 0) DrawTextureEx(arrowTexture, arrowPosition, arrowRotation, arrowScale, WHITE);
+                    if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
                     if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
@@ -237,6 +253,7 @@ int main(void)
 
     return 0;
 }
+
 
 
 WordList LoadWordList(const char *filePath) {
