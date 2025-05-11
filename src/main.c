@@ -84,6 +84,8 @@ int main(void)
                     playerInputEditMode = true;
                     playerInput[0] = '\0'; // Limpa o buffer
                     GuiSetState(STATE_NORMAL); // Raygui: Garante que o estado visual do controle está normal
+
+                    ResetUsedWordList(); //Reseta o arquivo txt ao iniciar um novo jogo!!!!
                 }
 
             } break;
@@ -112,6 +114,7 @@ int main(void)
             {
                 if (IsKeyPressed(KEY_THREE))
                 {
+                    ResetUsedWordList(); //Resetar o arquivo txt se iniciarmos um novo jogo após o jogo anteriorS
                     currentGameState = MENU;
                 }
 
@@ -158,19 +161,20 @@ int main(void)
                     // Raygui: Desenha o campo de input E processa o input do teclado se playerInputEditMode for true
                     // Retorna true quando Enter é pressionado E está em modo de edição
                     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode)) {
-                         TraceLog(LOG_INFO, TextFormat("Player submitted: '%s'", playerInput));
-                         // TODO: CHAMAR LÓGICA DE VALIDAÇÃO AQUI!
-                         // bool isValid = CheckWord(playerInput, currentSyllable, &wordList); // Sua função de validação
-                         // if (isValid) {
-                         //     TraceLog(LOG_INFO, "Word is valid!");
-                         //     // TODO: Lógica de passar a bomba, selecionar nova sílaba, reiniciar timer, passar para próximo jogador
-                         //     // currentSyllable = SelectRandomSyllable(&wordList); // Seleciona nova sílaba
-                         //     // bombTimer = initialBombTime; // Reinicia o timer
-                         //     playerInput[0] = '\0'; // Limpa o campo para a próxima entrada
-                         // } else {
-                         //     TraceLog(LOG_WARNING, "Word is NOT valid or does not contain syllable!");
-                         //     // TODO: Lógica para punir o jogador (talvez ele perde a rodada, o timer continua, etc.)
-                         // }
+                        TraceLog(LOG_INFO, TextFormat("Player submitted: '%s'", playerInput));
+
+                        bool isValid = checkWord(playerInput, currentSyllable, &wordList);
+
+                        if (isValid){
+                            //PRECISAMOS AQUI, ADICIONAR A LOGICA DE MOVER A SETA PRO PROXIMO JOGADOR!
+                            currentSyllable = SelectRandomSyllable(&wordList); //Seleciona a proxima silaba
+                            playerInput[0] = '\0'; //Reseta o input do usuário!
+
+                        } else {
+                            playerInput[0] = '\0'; //Reseta o input do usuário!
+                        }
+                         
+                         
                     }
 
                     float arrowScale = 0.4f;
