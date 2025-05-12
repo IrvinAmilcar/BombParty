@@ -13,12 +13,14 @@
 
 int main(void)
 {
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    int display = GetCurrentMonitor();
+    const int screenWidth = GetMonitorPhysicalWidth(display);
+    const int screenHeight = GetMonitorPhysicalHeight(display);
 
     srand(time(NULL));
 
     InitWindow(screenWidth, screenHeight, "BombParty");
+    ToggleFullscreen();
 
     // Inicialização Raygui: Carrega o estilo padrão
     GuiLoadStyleDefault();
@@ -66,6 +68,8 @@ int main(void)
     float initialBombTime = 15.0f;
 
     SetTargetFPS(60);
+    int currentActualWidth = GetScreenWidth();
+    int currentActualHeight = GetScreenHeight();
 
     while (!WindowShouldClose())
     {
@@ -140,8 +144,8 @@ int main(void)
                     } else {
                         menuText = "Erro: Lista de palavras nao carregada!";
                     }
-                    DrawTextEx(textFont, "Bomb Party", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, screenHeight/3}, 40, 0, GRAY);
-                    DrawTextEx(textFont, menuText, (Vector2){screenWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, screenHeight/2}, 20, 0, DARKGRAY);
+                    DrawTextEx(textFont, "Bomb Party", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, currentActualHeight/3}, 40, 0, GRAY);
+                    DrawTextEx(textFont, menuText, (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, currentActualHeight/2}, 20, 0, DARKGRAY);
  
                 } break;
 
@@ -150,14 +154,14 @@ int main(void)
                     DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK);
 
                     if (currentSyllable != NULL && wordList.count > 0) {
-                        Vector2 syllablePos = { screenWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, screenHeight/2 - 80 };
+                        Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
                         DrawTextEx(textFont, currentSyllable, syllablePos, 60, 0, BLUE);
                     } else {
-                           DrawTextEx(textFont, "Sem Silaba!", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, screenHeight/2 - 80}, 30, 0, RED);
+                           DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
 
                     // Raygui: Define a área do campo de input
-                    Rectangle inputBounds = { screenWidth/2 - 150, screenHeight - 80, 300, 40 };
+                    Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     // Raygui: Desenha o campo de input E processa o input do teclado se playerInputEditMode for true
                     // Retorna true quando Enter é pressionado E está em modo de edição
                     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode)) {
@@ -183,16 +187,16 @@ int main(void)
                     //Esse calculo serve pra por um elemento no meio da tela obviamente sem o 9, aquilo foi só pra ajustar!!
                     //arrow centralizada:
                     Vector2 arrowPosition = {
-                        screenWidth / 2 - (arrowTexture.width * arrowScale) / 2,
-                        (screenHeight / 2 - (arrowTexture.height * arrowScale) / 2) + 9
+                        currentActualWidth / 2 - (arrowTexture.width * arrowScale) / 2,
+                        (currentActualHeight / 2 - (arrowTexture.height * arrowScale) / 2) + 9
                     };
 
                     float bombScale = 0.3f;
                     float bombRotation = 0.0f;
                     
                     Vector2 bombPosition = {
-                        screenWidth / 2 - (bombTexture.width * bombScale) / 2,
-                        screenHeight / 2 - (bombTexture.height * bombScale) / 2
+                        currentActualWidth / 2 - (bombTexture.width * bombScale) / 2,
+                        currentActualHeight / 2 - (bombTexture.height * bombScale) / 2
                     };
 
                     float sparkScale = 0.05f;
@@ -208,20 +212,20 @@ int main(void)
                     if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
                     if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
 
-                    DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){screenWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
+                    DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){currentActualWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
 
                 } break;
 
                 case GAME_OVER:
                 {
-                    DrawTextEx(textFont, "Fim de Jogo!", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Fim de Jogo!", 40, 0).x/2, screenHeight/3}, 40, 0, DARKGRAY);
-                    DrawTextEx(textFont, "Pressione 3 para Reiniciar", (Vector2){screenWidth/2 - MeasureTextEx(textFont, "Pressione 3 para Reiniciar", 20, 0).x/2, screenHeight/2}, 20, 0, GRAY);
+                    DrawTextEx(textFont, "Fim de Jogo!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Fim de Jogo!", 40, 0).x/2, currentActualHeight/3}, 40, 0, DARKGRAY);
+                    DrawTextEx(textFont, "Pressione 3 para Reiniciar", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Pressione 3 para Reiniciar", 20, 0).x/2, currentActualHeight/2}, 20, 0, GRAY);
                 } break;
 
                 default: break;
             }
 
-            DrawFPS(10, screenHeight - 20);
+            DrawFPS(10, currentActualHeight - 20);
 
         EndDrawing();
     }
