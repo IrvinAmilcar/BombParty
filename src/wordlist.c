@@ -164,7 +164,7 @@ void UnloadWordList(WordList* list) {
 // --- Funções que usam a lista (Ajustadas para usar wordPointers) ---
 
 const char* SelectRandomSyllable(const WordList* list) {
-    if (list == NULL || list->wordPointers == NULL || list->count == 0) { // Usar wordPointers
+    if (list == NULL || list->wordPointers == NULL || list->count == 0) {
         TraceLog(LOG_WARNING, "SelectRandomSyllable: Word list is empty or not loaded.");
         return "err";
     }
@@ -172,37 +172,50 @@ const char* SelectRandomSyllable(const WordList* list) {
     const char* selectedWord = NULL;
     int wordLength = 0;
     int tries = 0;
-    const int maxTries = 100; // Limitar tentativas para evitar loop infinito em listas ruins
+    const int maxTries = 100;
+    const char* forbiddenLetters = "KHWYZ";
 
     while (selectedWord == NULL && tries < maxTries) {
         int wordIndex = GetRandomValue(0, list->count - 1);
-        // Usar wordPointers para acessar a palavra
         selectedWord = list->wordPointers[wordIndex];
 
-        // Adicionar verificação extra se o ponteiro individual na lista for nulo (sinal de problema)
         if (selectedWord == NULL) {
-             TraceLog(LOG_WARNING, TextFormat("SelectRandomSyllable: Ponteiro nulo encontrado no índice %d da lista.", wordIndex));
-             tries++; // Contar como uma tentativa falha
-             continue; // Pular para a próxima tentativa
+            TraceLog(LOG_WARNING, TextFormat("SelectRandomSyllable: Null pointer found at index %d in the list.", wordIndex));
+            tries++;
+            continue;
         }
 
-        wordLength = strlen(selectedWord); // strlen deve ser seguro agora
+        wordLength = strlen(selectedWord);
 
         if (wordLength < MIN_SYLLABLE_LENGTH) {
-             selectedWord = NULL; // Palavra muito curta, tentar outra
+            selectedWord = NULL;
+        } else {
+            // Verificar se a palavra contém alguma das letras proibidas
+            bool containsForbidden = false;
+            for (int i = 0; selectedWord[i] != '\0'; i++) {
+                for (int j = 0; forbiddenLetters[j] != '\0'; j++) {
+                    if (toupper(selectedWord[i]) == forbiddenLetters[j]) {
+                        containsForbidden = true;
+                        break;
+                    }
+                }
+                if (containsForbidden) {
+                    break;
+                }
+            }
+            if (containsForbidden) {
+                selectedWord = NULL; // Palavra contém letras proibidas, tentar outra
+            }
         }
         tries++;
     }
 
-     if (selectedWord == NULL) {
-         TraceLog(LOG_WARNING, TextFormat("SelectRandomSyllable: Could not find a suitable word (min length %d) after %d tries.", MIN_SYLLABLE_LENGTH, maxTries));
-         // Retornar um valor de erro ou uma string padrão para evitar problemas
-         static char failSyllable[] = "fail";
-         return failSyllable;
-     }
+    if (selectedWord == NULL) {
+        TraceLog(LOG_WARNING, TextFormat("SelectRandomSyllable: Could not find a suitable word (min length %d) after %d tries without forbidden letters.", MIN_SYLLABLE_LENGTH, maxTries));
+        static char failSyllable[] = "fail";
+        return failSyllable;
+    }
 
-
-    // O restante da lógica de seleção de sílaba permanece a mesma...
     int syllableLength;
     int startIndex;
 
@@ -213,12 +226,9 @@ const char* SelectRandomSyllable(const WordList* list) {
     }
 
     int maxStartIndex = wordLength - syllableLength;
-    // Garantir que startIndex não seja negativo se maxStartIndex for 0 (palavra = sílaba)
     startIndex = (maxStartIndex > 0) ? GetRandomValue(0, maxStartIndex) : 0;
 
-
     static char randomSyllable[MAX_SYLLABLE_LENGTH + 1];
-    // selectedWord agora é um ponteiro para dentro do allWordsBuffer
     strncpy(randomSyllable, selectedWord + startIndex, syllableLength);
     randomSyllable[syllableLength] = '\0';
 
