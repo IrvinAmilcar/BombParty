@@ -13,6 +13,6 @@ typedef struct {
 
 Vector2 CalculatePlayerPosition(int playerIndex, int totalPlayers, Vector2 center, float radius);
 
-void drawPlayerInfo(const Player* player, Font font, Color textColor, Color lifeColor);
+void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color lifeColor);
 
 #endif

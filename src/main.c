@@ -7,28 +7,53 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h>
+#include <math.h> // (explicacao 1)
 
 #include "wordlist.h"
 #include "game.h"
-#include "player.h"
+#include "player.h" // (explicacao 2)
 
+// (explicacao 3)
 #define NUM_PLAYERS 2
 Player players[NUM_PLAYERS];
 int currentPlayerIndex = 0;
+Vector2 playerPositionsCenter; // Centro para posicionar os jogadores
+float playerPositionsRadius = 250.0f; // Raio do círculo dos jogadores
+
+// (explicacao 4)
+void InitializePlayers() {
+    // Nomes de exemplo, você pode querer carregar isso de algum lugar ou pedir input
+    char playerNames[NUM_PLAYERS][MAX_PLAYER_NAME_LEN] = {"Jogador 1", "Jogador 2"};
+
+    for (int i = 0; i < NUM_PLAYERS; ++i) {
+        strncpy(players[i].name, playerNames[i], MAX_PLAYER_NAME_LEN - 1);
+        players[i].name[MAX_PLAYER_NAME_LEN - 1] = '\0'; // Garante null termination
+        players[i].lives = 2; // Começa com 2 vidas
+        // A posição é calculada mais tarde, no loop principal se a tela mudar,
+        // ou pode ser calculada aqui uma vez se a tela for fixa após InitWindow
+    }
+    currentPlayerIndex = 0; // Começa com o primeiro jogador
+}
 
 
 int main(void)
 {
     int display = GetCurrentMonitor();
-    const int screenWidth = GetMonitorPhysicalWidth(display);
-    const int screenHeight = GetMonitorPhysicalHeight(display);
+    // Use GetScreenWidth() e GetScreenHeight() dentro do loop principal
+    // para pegar o tamanho atual da janela, caso ela seja redimensionada.
+    // As variáveis screenWidth e screenHeight do monitor físico são boas para InitWindow,
+    // mas o tamanho da janela atual pode ser diferente se não for fullscreen nativo ou se for redimensionada.
+    // Manter GetScreenWidth/Height no loop de desenho/update é mais robusto.
+    const int initialScreenWidth = GetMonitorPhysicalWidth(display);
+    const int initialScreenHeight = GetMonitorPhysicalHeight(display); // (explicacao 5)
+
 
     srand(time(NULL));
 
-    InitWindow(screenWidth, screenHeight, "BombParty");
+    InitWindow(initialScreenWidth, initialScreenHeight, "BombParty"); // (explicacao 5)
     ToggleFullscreen();
 
+    // Inicialização Raygui: Carrega o estilo padrão
     GuiLoadStyleDefault();
 
     Font customFont = LoadFontEx("resources/fonts/Montserrat-Regular.ttf", 40, NULL, 0);
@@ -74,11 +99,21 @@ int main(void)
     float initialBombTime = 15.0f;
 
     SetTargetFPS(60);
-    int currentActualWidth = GetScreenWidth();
-    int currentActualHeight = GetScreenHeight();
+
+    // (explicacao 6) Removido: int currentActualWidth = GetScreenWidth();
+    // (explicacao 6) Removido: int currentActualHeight = GetScreenHeight();
+
 
     while (!WindowShouldClose())
     {
+        // (explicacao 7) Obtém as dimensões atuais da janela dentro do loop
+        int currentActualWidth = GetScreenWidth();
+        int currentActualHeight = GetScreenHeight();
+
+        // (explicacao 8) Calcula a posição central para o layout dos jogadores
+        playerPositionsCenter = (Vector2){ currentActualWidth / 2.0f, currentActualHeight / 2.0f };
+
+
         switch (currentGameState)
         {
             case MENU:
@@ -86,6 +121,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ONE) && wordList.count > 0)
                 {
                     currentGameState = PLAYING;
+                    InitializePlayers(); // (explicacao 9) Inicializa os jogadores
                     bombTimer = initialBombTime;
                     currentSyllable = SelectRandomSyllable(&wordList);
                     TraceLog(LOG_INFO, TextFormat("Game started with syllable: %s", currentSyllable));
@@ -104,18 +140,33 @@ int main(void)
             {
                 bombTimer -= GetFrameTime();
 
+                // (explicacao 10) Lógica para quando o tempo da bomba acaba
                 if (bombTimer <= 0.0f)
                 {
                     bombTimer = 0.0f;
-                    currentGameState = GAME_OVER;
-                    TraceLog(LOG_INFO, "Bomb exploded! Game Over.");
-                    playerInputEditMode = false;
-                    currentSyllable = NULL;
+                    TraceLog(LOG_INFO, TextFormat("Tempo esgotado para %s!", players[currentPlayerIndex].name));
+                    players[currentPlayerIndex].lives--; // Jogador atual perde uma vida
+
+                    if (players[currentPlayerIndex].lives <= 0) {
+                         TraceLog(LOG_INFO, TextFormat("%s foi eliminado!", players[currentPlayerIndex].name));
+                         // Lógica para eliminar o jogador ou verificar fim de jogo
+                         // Por enquanto, apenas registra no log. Você precisaria de um mecanismo
+                         // para pular jogadores eliminados na troca de turno ou terminar o jogo.
+                         // Simplificado: Apenas perde a vida, mas o jogo continua.
+                         // Uma lógica mais completa verificaria se sobrou apenas 1 jogador.
+                    }
+
+                    // Passa a bomba para o próximo jogador
+                    currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
+                    bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
+                    currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba para o próximo jogador
+                    TraceLog(LOG_INFO, TextFormat("Turno de %s. Nova silaba: %s", players[currentPlayerIndex].name, currentSyllable));
+                    playerInput[0] = '\0'; // Limpa o input para o novo turno
                 }
 
                 if (IsKeyPressed(KEY_TWO))
                 {
-                 currentGameState = GAME_OVER;
+                   currentGameState = GAME_OVER; // Sai do jogo manualmente para testar
                 }
 
             } break;
@@ -124,8 +175,10 @@ int main(void)
             {
                 if (IsKeyPressed(KEY_THREE))
                 {
-                    ResetUsedWordList(); //Resetar o arquivo txt se iniciarmos um novo jogo após o jogo anteriorS
+                    // Resetar o arquivo txt se iniciarmos um novo jogo após o jogo anteriorS
+                    ResetUsedWordList();
                     currentGameState = MENU;
+                    // (explicacao 11) Não chama InitializePlayers() aqui, pois isso acontece na transição MENU -> PLAYING
                 }
 
             } break;
@@ -136,7 +189,26 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            float rotacao = 90.0f;
+
+            // (explicacao 12) Recalcula as posições dos jogadores a cada frame (útil se a janela puder ser redimensionada)
+            for (int i = 0; i < NUM_PLAYERS; ++i) {
+                 players[i].screenPosition = CalculatePlayerPosition(i, NUM_PLAYERS, playerPositionsCenter, playerPositionsRadius);
+            }
+
+            // (explicacao 13) Desenha as informações de cada jogador
+            for (int i = 0; i < NUM_PLAYERS; ++i) {
+                // Use cores diferentes para o jogador atual ou jogadores eliminados, se desejar
+                Color nameColor = (i == currentPlayerIndex) ? DARKBLUE : DARKGRAY;
+                Color lifeColor = (players[i].lives <= 1) ? RED : BLACK;
+                DrawPlayerInfo(&players[i], textFont, nameColor, lifeColor);
+            }
+
+
+            // (explicacao 14) A variável 'rotacao' declarada aqui era local e não persistia o estado.
+            // A rotação da seta agora será calculada dinamicamente para apontar para o jogador atual.
+            // Removido: float rotacao = 90.0f;
+            // Removido: arrowRotation += rotacao; // Isso adicionava 90 a cada frame de desenho no estado PLAYING!
+
             switch (currentGameState)
             {
                 case MENU:
@@ -152,75 +224,122 @@ int main(void)
                     }
                     DrawTextEx(textFont, "Bomb Party", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, currentActualHeight/3}, 40, 0, GRAY);
                     DrawTextEx(textFont, menuText, (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, currentActualHeight/2}, 20, 0, DARKGRAY);
- 
+
                 } break;
-                
+
                 case PLAYING:
                 {
-                    DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK);
+                    // DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK); // (explicacao 15) Removido, player info já indica
 
                     if (currentSyllable != NULL && wordList.count > 0) {
                         Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
                         DrawTextEx(textFont, currentSyllable, syllablePos, 60, 0, BLUE);
                     } else {
-                           DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
+                            DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
 
-                    //float rotacao = 90.0f;
 
                     // Raygui: Define a área do campo de input
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     // Raygui: Desenha o campo de input E processa o input do teclado se playerInputEditMode for true
                     // Retorna true quando Enter é pressionado E está em modo de edição
+                    // (explicacao 16) Modificada a lógica de processamento do input do jogador
                     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode)) {
                         TraceLog(LOG_INFO, TextFormat("Player submitted: '%s'", playerInput));
 
                         bool isValid = checkWord(playerInput, currentSyllable, &wordList);
 
                         if (isValid){
-                            //PRECISAMOS AQUI, ADICIONAR A LOGICA DE MOVER A SETA PRO PROXIMO JOGADOR!
-                            currentSyllable = SelectRandomSyllable(&wordList); //Seleciona a proxima silaba
-                            playerInput[0] = '\0'; //Reseta o input do usuário!
-                            rotacao += 90.0f;
-                            bombTimer = initialBombTime;
+                            TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
+                            // Palavra válida: Passa o turno
+                             currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
+                             bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
+                             currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba para o próximo jogador
+                             TraceLog(LOG_INFO, TextFormat("Turno de %s. Nova silaba: %s", players[currentPlayerIndex].name, currentSyllable));
 
                         } else {
-                            playerInput[0] = '\0'; //Reseta o input do usuário!
+                             TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
+                            // Palavra inválida: Jogador atual perde uma vida
+                             players[currentPlayerIndex].lives--;
+                              TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", players[currentPlayerIndex].name, players[currentPlayerIndex].lives));
+
+                             if (players[currentPlayerIndex].lives <= 0) {
+                                 TraceLog(LOG_INFO, TextFormat("%s foi eliminado!", players[currentPlayerIndex].name));
+                                 // Aqui você implementaria a lógica de fim de jogo se apenas 1 jogador sobrar
+                                 // Por enquanto, apenas registra no log e o jogo continua
+                             }
+
+                            // Mesmo com palavra inválida, o turno geralmente passa no Bomb Party original
+                            // ou o jogador perde a vida e o turno continua para ele se ele tiver vidas?
+                            // Vamos seguir a regra de passar o turno após tentar, válida ou não (como no tempo esgotado)
+                             currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
+                             bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
+                             currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba
+                             TraceLog(LOG_INFO, TextFormat("Turno de %s. Nova silaba: %s", players[currentPlayerIndex].name, currentSyllable));
                         }
-                         
-                         
+
+                         playerInput[0] = '\0'; // Reseta o input do usuário após a tentativa
                     }
 
-                    float arrowScale = 0.4f;
-                    float arrowRotation = rotacao;
-                    
-                    //Esse calculo serve pra por um elemento no meio da tela obviamente sem o 9, aquilo foi só pra ajustar!!
-                    //arrow centralizada:
-                    Vector2 arrowPosition = {
-                        currentActualWidth / 2 - (arrowTexture.width * arrowScale) / 2,
-                        (currentActualHeight / 2 - (arrowTexture.height * arrowScale) / 2) + 9
-                    };
+                    // (explicacao 17) Cálculo para desenhar a seta apontando para o jogador atual
+                    if (arrowTexture.id != 0 && NUM_PLAYERS > 0) { // Garante que a textura existe e há jogadores
+                         Vector2 arrowPivot = playerPositionsCenter; // Seta pivoteia no centro
+                         Vector2 targetPlayerPos = players[currentPlayerIndex].screenPosition;
+
+                         Vector2 direction = {
+                            targetPlayerPos.x - arrowPivot.x,
+                            targetPlayerPos.y - arrowPivot.y
+                         };
+
+                         // Calcula o ângulo em radianos
+                         float angle_radians = atan2f(direction.y, direction.x);
+                         float angle_degrees = angle_radians * RAD2DEG; // Raylib define RAD2DEG, não RAD2RAD, correção: usar RAD2DEG
+
+                         //float angle_degrees = angle_radians * (180.0f / PI); // Alternativa manual
+
+                         // Ajusta a rotação se a textura da seta não aponta para a direita (0 graus) por padrão.
+                         // Se sua seta aponta para cima na textura, adicione -90.0f. Se aponta para baixo, +90.0f.
+                         // Se aponta para a esquerda, +180.0f.
+                         float arrowDrawingRotation = angle_degrees; // + OFFSET_DA_SUA_TEXTURA; // Exemplo: +0.0f se aponta para direita
+
+                         float arrowScale = 0.4f; // Mantém a escala definida antes
+
+                         // Define source, dest e origin para DrawTexturePro
+                         Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
+                         // O destRec.x e destRec.y são a posição do PIVOT (center)
+                         Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
+                         // O origin é o centro da seta escalonada
+                         Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
+
+                         // Desenha a seta usando DrawTexturePro para controle total
+                         DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
+
+                    }
+
 
                     float bombScale = 0.3f;
                     float bombRotation = 0.0f;
-                    
+
+                    // (explicacao 18) Posição da bomba e faísca ainda podem ser calculadas no centro, como antes
                     Vector2 bombPosition = {
                         currentActualWidth / 2 - (bombTexture.width * bombScale) / 2,
                         currentActualHeight / 2 - (bombTexture.height * bombScale) / 2
                     };
 
                     float sparkScale = 0.05f;
-                    float sparkRotation = -30.0f * DEG2RAD;
-                    
-                    //Baseada na posição da bomba a faísca tem q ser movimentada manualmente!!, se o tamanho da bomba alterar a posição da faísca muda tbm!!
+                    // (explicacao 19) sparkRotation está em radianos, DEG2RAD é uma macro do Raylib, está correto.
+                    float sparkRotation = -30.0f; // * DEG2RAD; // Removido * DEG2RAD pois a rotação em DrawTextureEx/Pro é em GRAUS
+
+
                     Vector2 sparkPosition = {
                         bombPosition.x + 100,
-                        bombPosition.y + 5 
+                        bombPosition.y + 5
                     };
 
-                    if (arrowTexture.id != 0) DrawTextureEx(arrowTexture, arrowPosition, arrowRotation, arrowScale, WHITE);
+                    // (explicacao 20) Usando DrawTextureEx ou DrawTexture na bomba e faísca (sem rotação/pivot especial)
                     if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
-                    if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
+                    if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE); // Usando sparkRotation em graus agora
+
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", bombTimer), (Vector2){currentActualWidth - 150, 10}, 25, 0, (bombTimer <= 5.0f ? RED : DARKGRAY));
 
@@ -241,7 +360,7 @@ int main(void)
     }
 
     TraceLog(LOG_INFO, "Loop principal terminou. Iniciando limpeza de recursos.");
-    
+
     UnloadWordList(&wordList);
 
     if (customFont.texture.id != 0 && textFont.texture.id != GetFontDefault().texture.id)
