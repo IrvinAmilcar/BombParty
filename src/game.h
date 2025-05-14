@@ -1,6 +1,11 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "raylib.h"
+#include "wordlist.h"
+#include "player.h"
+#include <stdbool.h>
+
 typedef enum GameState {
     MENU = 0,
     PLAYING,
@@ -11,5 +16,21 @@ typedef enum GameState {
 #define MAX_SYLLABLE_LENGTH 3
 #define MIN_SYLLABLE_LENGTH 2
 #define MAX_PLAYER_INPUT_CHARS 30
+
+typedef struct {
+    float bombTimer;
+    float initialBombTime;
+    const char* currentSyllable; 
+    int currentPlayerIndex; 
+    Player* players;
+    int numPlayers;              
+    // int winnerPlayerIndex;    // Opcional
+} GameManager;
+
+GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInput, bool* playerInputEditMode, WordList* wordList);
+
+// - Funções de Update para outros estados (UpdateMenuState, UpdateGameOverState)
+// - Funções de Desenho para cada estado (DrawMenuState, DrawPlayingState, DrawGameOverState)
+// - Funções auxiliares de alto nível que podem ser usadas em múltiplos arquivos.
 
 #endif
