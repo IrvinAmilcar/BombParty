@@ -211,7 +211,6 @@ int main(void)
 
                 case PLAYING:
                 {
-                    // DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK); // (explicacao 15) Removido, player info já indica
 
                     if (currentSyllable != NULL && wordList.count > 0) {
                         Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
