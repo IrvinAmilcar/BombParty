@@ -3,6 +3,10 @@
 
 typedef enum GameState {
     MENU = 0,
+    SELECT_PLAYERS,
+    SELECT_MODE,
+    LEADERBOARD,
+    CREDITS,
     PLAYING,
     GAME_OVER
 } GameState;

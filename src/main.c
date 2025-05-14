@@ -92,9 +92,28 @@ int main(void)
     bool playerInputEditMode = false;
 
     GameState currentGameState = MENU;
+    int selectPlayers = 2;
+    typedef enum GameMode{
+        NORMAL,
+        LOUCO,
+    } GameMode;
+    //GameMode selectedMode = NORMAL;
 
     float bombTimer = 0.0f;
     float initialBombTime = 15.0f;
+
+    int menuOption = 0;
+    const int maxMenuOptions = 3;
+
+    int selectedPlayers = 0;           // 0 para 2 jogadores, 1 para 3, 2 para 4
+    const int totalPlayerOptions = 3;  // 3 opções: 2, 3, 4 jogadores
+
+    int selectedMode = 0;             // 0 = Normal, 1 = Louco
+    const int totalModeOptions = 2;
+
+    bool modoLouco = false;
+
+
 
     SetTargetFPS(60);
 
@@ -110,7 +129,7 @@ int main(void)
         {
             case MENU:
             {
-                if (IsKeyPressed(KEY_ONE) && wordList.count > 0)
+                /*if (IsKeyPressed(KEY_ONE) && wordList.count > 0)
                 {
                     currentGameState = PLAYING;
                     InitializePlayers(); 
@@ -124,9 +143,77 @@ int main(void)
                     GuiSetState(STATE_NORMAL); // Raygui: Garante que o estado visual do controle está normal
 
                     ResetUsedWordList(); //Reseta o arquivo txt ao iniciar um novo jogo!!!!
+                }*/
+
+                
+
+                // Pressionar seta para baixo aumenta o índice
+                if (IsKeyPressed(KEY_DOWN)) {
+                    menuOption = (menuOption + 1) % maxMenuOptions;
                 }
 
+                // Pressionar seta para cima diminui o índice
+                if (IsKeyPressed(KEY_UP)) {
+                    menuOption = (menuOption - 1 + maxMenuOptions) % maxMenuOptions;
+                }
+
+                // Pressionar ENTER seleciona a opção
+                if (IsKeyPressed(KEY_ENTER)) {
+                    switch (menuOption) {
+                        case 0: currentGameState = SELECT_PLAYERS; break;
+                        case 1: currentGameState = LEADERBOARD; break;
+                        case 2: currentGameState = CREDITS; break;
+                    }
+                }
+                
+
+
             } break;
+
+            case SELECT_PLAYERS:
+            {
+                if (IsKeyPressed(KEY_DOWN)) {
+                    selectedPlayers = (selectedPlayers + 1) % totalPlayerOptions;
+                }
+
+                if (IsKeyPressed(KEY_UP)) {
+                    selectedPlayers = (selectedPlayers - 1 + totalPlayerOptions) % totalPlayerOptions;
+                }
+
+                if (IsKeyPressed(KEY_ENTER)) {
+                    // Aqui você pode salvar o número real de jogadores se quiser (2 + selectedPlayers)
+                    currentGameState = SELECT_MODE;
+                }
+
+                // Voltar para o menu pressionando ESC
+                if (IsKeyPressed(KEY_BACKSPACE)) {
+                    currentGameState = MENU;
+                }
+            } break;
+
+            case SELECT_MODE:
+            {
+                if (IsKeyPressed(KEY_DOWN)) {
+                    selectedMode = (selectedMode + 1) % totalModeOptions;
+                }
+
+                if (IsKeyPressed(KEY_UP)) {
+                    selectedMode = (selectedMode - 1 + totalModeOptions) % totalModeOptions;
+                }
+
+                if (IsKeyPressed(KEY_ENTER)) {
+                    // Aqui você pode armazenar o modo e ir para o gameplay
+                    modoLouco = (selectedMode == 1);  // Salva o modo escolhido
+                    currentGameState = PLAYING;
+                }
+
+                if (IsKeyPressed(KEY_BACKSPACE)) {
+                    // Volta para seleção de jogadores
+                    currentGameState = SELECT_PLAYERS;
+                }
+            } break;
+
+
 
             case PLAYING:
             {
@@ -195,7 +282,7 @@ int main(void)
             {
                 case MENU:
                 {
-                    const char* menuText = "Pressione 1 para Comecar";
+                    /*const char* menuText = "Pressione 1 para Comecar";
                     char wordCountText[64];
 
                     if (wordList.count > 0) {
@@ -206,8 +293,48 @@ int main(void)
                     }
                     DrawTextEx(textFont, "Bomb Party", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, currentActualHeight/3}, 40, 0, GRAY);
                     DrawTextEx(textFont, menuText, (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, currentActualHeight/2}, 20, 0, DARKGRAY);
+                    */
+                    ClearBackground(DARKGRAY);
+                    DrawText("MENU PRINCIPAL", 20, 20, 40, RAYWHITE);
 
+                    const char *options[] = { "JOGAR", "LEADERBOARD", "CRÉDITOS" };
+
+                    for (int i = 0; i < maxMenuOptions; i++)
+                    {
+                        Color color = (i == menuOption) ? YELLOW : RAYWHITE;
+                        DrawText(options[i], 100, 100 + i * 40, 30, color);
+                    }
                 } break;
+
+                case SELECT_PLAYERS:
+                {
+                    ClearBackground(BLACK);
+                    DrawText("Selecione o número de jogadores", 100, 50, 30, RAYWHITE);
+
+                    const char *options[] = { "2 Jogadores", "3 Jogadores", "4 Jogadores" };
+
+                    for (int i = 0; i < totalPlayerOptions; i++)
+                    {
+                        Color color = (i == selectedPlayers) ? YELLOW : GRAY;
+                        DrawText(options[i], 120, 120 + i * 40, 25, color);
+                    }
+                } break;
+
+                case SELECT_MODE:
+                {
+                    ClearBackground(DARKGRAY);
+                    DrawText("Selecione o modo de jogo", 100, 50, 30, RAYWHITE);
+
+                    const char *modes[] = { "Normal", "Louco" };
+
+                    for (int i = 0; i < totalModeOptions; i++)
+                    {
+                        Color color = (i == selectedMode) ? SKYBLUE : LIGHTGRAY;
+                        DrawText(modes[i], 120, 120 + i * 40, 25, color);
+                    }
+                } break;
+
+
 
                 case PLAYING:
                 {
