@@ -7,20 +7,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h> // (explicacao 1)
+#include <math.h> 
 
 #include "wordlist.h"
 #include "game.h"
-#include "player.h" // (explicacao 2)
+#include "player.h" 
 
-// (explicacao 3)
 #define NUM_PLAYERS 2
 Player players[NUM_PLAYERS];
 int currentPlayerIndex = 0;
 Vector2 playerPositionsCenter; // Centro para posicionar os jogadores
 float playerPositionsRadius = 250.0f; // Raio do círculo dos jogadores
 
-// (explicacao 4)
 void InitializePlayers() {
     // Nomes de exemplo, você pode querer carregar isso de algum lugar ou pedir input
     char playerNames[NUM_PLAYERS][MAX_PLAYER_NAME_LEN] = {"Jogador 1", "Jogador 2"};
@@ -45,12 +43,12 @@ int main(void)
     // mas o tamanho da janela atual pode ser diferente se não for fullscreen nativo ou se for redimensionada.
     // Manter GetScreenWidth/Height no loop de desenho/update é mais robusto.
     const int initialScreenWidth = GetMonitorPhysicalWidth(display);
-    const int initialScreenHeight = GetMonitorPhysicalHeight(display); // (explicacao 5)
+    const int initialScreenHeight = GetMonitorPhysicalHeight(display); 
 
 
     srand(time(NULL));
 
-    InitWindow(initialScreenWidth, initialScreenHeight, "BombParty"); // (explicacao 5)
+    InitWindow(initialScreenWidth, initialScreenHeight, "BombParty"); 
     ToggleFullscreen();
 
     // Inicialização Raygui: Carrega o estilo padrão
@@ -100,17 +98,11 @@ int main(void)
 
     SetTargetFPS(60);
 
-    // (explicacao 6) Removido: int currentActualWidth = GetScreenWidth();
-    // (explicacao 6) Removido: int currentActualHeight = GetScreenHeight();
-
-
     while (!WindowShouldClose())
     {
-        // (explicacao 7) Obtém as dimensões atuais da janela dentro do loop
         int currentActualWidth = GetScreenWidth();
         int currentActualHeight = GetScreenHeight();
 
-        // (explicacao 8) Calcula a posição central para o layout dos jogadores
         playerPositionsCenter = (Vector2){ currentActualWidth / 2.0f, currentActualHeight / 2.0f };
 
 
@@ -121,7 +113,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ONE) && wordList.count > 0)
                 {
                     currentGameState = PLAYING;
-                    InitializePlayers(); // (explicacao 9) Inicializa os jogadores
+                    InitializePlayers(); 
                     bombTimer = initialBombTime;
                     currentSyllable = SelectRandomSyllable(&wordList);
                     TraceLog(LOG_INFO, TextFormat("Game started with syllable: %s", currentSyllable));
@@ -140,7 +132,6 @@ int main(void)
             {
                 bombTimer -= GetFrameTime();
 
-                // (explicacao 10) Lógica para quando o tempo da bomba acaba
                 if (bombTimer <= 0.0f)
                 {
                     bombTimer = 0.0f;
@@ -178,7 +169,6 @@ int main(void)
                     // Resetar o arquivo txt se iniciarmos um novo jogo após o jogo anteriorS
                     ResetUsedWordList();
                     currentGameState = MENU;
-                    // (explicacao 11) Não chama InitializePlayers() aqui, pois isso acontece na transição MENU -> PLAYING
                 }
 
             } break;
@@ -190,24 +180,16 @@ int main(void)
 
             ClearBackground(RAYWHITE);
 
-            // (explicacao 12) Recalcula as posições dos jogadores a cada frame (útil se a janela puder ser redimensionada)
             for (int i = 0; i < NUM_PLAYERS; ++i) {
                  players[i].screenPosition = CalculatePlayerPosition(i, NUM_PLAYERS, playerPositionsCenter, playerPositionsRadius);
             }
 
-            // (explicacao 13) Desenha as informações de cada jogador
             for (int i = 0; i < NUM_PLAYERS; ++i) {
                 // Use cores diferentes para o jogador atual ou jogadores eliminados, se desejar
                 Color nameColor = (i == currentPlayerIndex) ? DARKBLUE : DARKGRAY;
                 Color lifeColor = (players[i].lives <= 1) ? RED : BLACK;
                 DrawPlayerInfo(&players[i], textFont, nameColor, lifeColor);
             }
-
-
-            // (explicacao 14) A variável 'rotacao' declarada aqui era local e não persistia o estado.
-            // A rotação da seta agora será calculada dinamicamente para apontar para o jogador atual.
-            // Removido: float rotacao = 90.0f;
-            // Removido: arrowRotation += rotacao; // Isso adicionava 90 a cada frame de desenho no estado PLAYING!
 
             switch (currentGameState)
             {
@@ -243,7 +225,6 @@ int main(void)
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     // Raygui: Desenha o campo de input E processa o input do teclado se playerInputEditMode for true
                     // Retorna true quando Enter é pressionado E está em modo de edição
-                    // (explicacao 16) Modificada a lógica de processamento do input do jogador
                     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode)) {
                         TraceLog(LOG_INFO, TextFormat("Player submitted: '%s'", playerInput));
 
@@ -281,7 +262,6 @@ int main(void)
                          playerInput[0] = '\0'; // Reseta o input do usuário após a tentativa
                     }
 
-                    // (explicacao 17) Cálculo para desenhar a seta apontando para o jogador atual
                     if (arrowTexture.id != 0 && NUM_PLAYERS > 0) { // Garante que a textura existe e há jogadores
                          Vector2 arrowPivot = playerPositionsCenter; // Seta pivoteia no centro
                          Vector2 targetPlayerPos = players[currentPlayerIndex].screenPosition;
@@ -320,14 +300,12 @@ int main(void)
                     float bombScale = 0.3f;
                     float bombRotation = 0.0f;
 
-                    // (explicacao 18) Posição da bomba e faísca ainda podem ser calculadas no centro, como antes
                     Vector2 bombPosition = {
                         currentActualWidth / 2 - (bombTexture.width * bombScale) / 2,
                         currentActualHeight / 2 - (bombTexture.height * bombScale) / 2
                     };
 
                     float sparkScale = 0.05f;
-                    // (explicacao 19) sparkRotation está em radianos, DEG2RAD é uma macro do Raylib, está correto.
                     float sparkRotation = -30.0f; // * DEG2RAD; // Removido * DEG2RAD pois a rotação em DrawTextureEx/Pro é em GRAUS
 
 
@@ -336,7 +314,6 @@ int main(void)
                         bombPosition.y + 5
                     };
 
-                    // (explicacao 20) Usando DrawTextureEx ou DrawTexture na bomba e faísca (sem rotação/pivot especial)
                     if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
                     if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE); // Usando sparkRotation em graus agora
 
