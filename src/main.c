@@ -9,7 +9,7 @@
 #include <time.h>
 #include <math.h> // (explicacao 1)
 
-#include "wordlist.h"
+#include "wordlist.h" // (explicacao 21) Manter a inclusão, mas o uso será desativado
 #include "game.h"
 #include "player.h" // (explicacao 2)
 
@@ -85,10 +85,11 @@ int main(void)
         TraceLog(LOG_INFO, "Successfully loaded textures.");
     }
 
-    WordList wordList = { NULL, 0 };
-    wordList = LoadWordList("resources/data/palavras.txt");
+    // (explicacao 22) Desativar o carregamento e a variável WordList
+    //WordList wordList = { NULL, 0 };
+    //wordList = LoadWordList("resources/data/palavras.txt");
 
-    const char* currentSyllable = NULL;
+    const char* currentSyllable = "TESTE"; // (explicacao 23) Valor fixo para a sílaba de teste
 
     char playerInput[MAX_PLAYER_INPUT_CHARS + 1] = { 0 };
     bool playerInputEditMode = false;
@@ -118,12 +119,14 @@ int main(void)
         {
             case MENU:
             {
-                if (IsKeyPressed(KEY_ONE) && wordList.count > 0)
+                // (explicacao 24) Removido a verificação de wordList.count
+                if (IsKeyPressed(KEY_ONE)) // && wordList.count > 0)
                 {
                     currentGameState = PLAYING;
                     InitializePlayers(); // (explicacao 9) Inicializa os jogadores
                     bombTimer = initialBombTime;
-                    currentSyllable = SelectRandomSyllable(&wordList);
+                    // (explicacao 25) Desativado a seleção de sílaba aleatória
+                    //currentSyllable = SelectRandomSyllable(&wordList);
                     TraceLog(LOG_INFO, TextFormat("Game started with syllable: %s", currentSyllable));
 
                     // Raygui: Ativa o modo de edição ao entrar no estado PLAYING
@@ -131,7 +134,8 @@ int main(void)
                     playerInput[0] = '\0'; // Limpa o buffer
                     GuiSetState(STATE_NORMAL); // Raygui: Garante que o estado visual do controle está normal
 
-                    ResetUsedWordList(); //Reseta o arquivo txt ao iniciar um novo jogo!!!!
+                    // (explicacao 26) Desativado o reset da lista de palavras usadas
+                    //ResetUsedWordList(); //Reseta o arquivo txt ao iniciar um novo jogo!!!!
                 }
 
             } break;
@@ -159,7 +163,8 @@ int main(void)
                     // Passa a bomba para o próximo jogador
                     currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
                     bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
-                    currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba para o próximo jogador
+                    // (explicacao 27) Desativado a seleção de nova sílaba
+                    //currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba para o próximo jogador
                     TraceLog(LOG_INFO, TextFormat("Turno de %s. Nova silaba: %s", players[currentPlayerIndex].name, currentSyllable));
                     playerInput[0] = '\0'; // Limpa o input para o novo turno
                 }
@@ -175,8 +180,8 @@ int main(void)
             {
                 if (IsKeyPressed(KEY_THREE))
                 {
-                    // Resetar o arquivo txt se iniciarmos um novo jogo após o jogo anteriorS
-                    ResetUsedWordList();
+                    // (explicacao 28) Desativado o reset da lista de palavras usadas
+                    //ResetUsedWordList(); //Resetar o arquivo txt se iniciarmos um novo jogo após o jogo anteriorS
                     currentGameState = MENU;
                     // (explicacao 11) Não chama InitializePlayers() aqui, pois isso acontece na transição MENU -> PLAYING
                 }
@@ -213,15 +218,23 @@ int main(void)
             {
                 case MENU:
                 {
-                    const char* menuText = "Pressione 1 para Comecar";
+                    const char* menuText = "Pressione 1 para Comecar (Teste)"; // (explicacao 29) Texto modificado para indicar modo de teste
                     char wordCountText[64];
 
+                    // (explicacao 30) Desativado o texto de contagem de palavras e a verificação
+                    /*
                     if (wordList.count > 0) {
                         snprintf(wordCountText, sizeof(wordCountText), " (%d palavras carregadas)", wordList.count);
                         menuText = TextFormat("Pressione 1 para Comecar%s", wordCountText);
                     } else {
                         menuText = "Erro: Lista de palavras nao carregada!";
                     }
+                    */
+                     // (explicacao 30) Texto alternativo para quando a lista não é carregada
+                     // Como a lista não será carregada, podemos sempre mostrar este texto
+                     menuText = "Pressione 1 para Comecar (Teste - Sem palavras)";
+
+
                     DrawTextEx(textFont, "Bomb Party", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Bomb Party", 40, 0).x/2, currentActualHeight/3}, 40, 0, GRAY);
                     DrawTextEx(textFont, menuText, (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, currentActualHeight/2}, 20, 0, DARKGRAY);
 
@@ -231,7 +244,8 @@ int main(void)
                 {
                     // DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK); // (explicacao 15) Removido, player info já indica
 
-                    if (currentSyllable != NULL && wordList.count > 0) {
+                    // (explicacao 31) A sílaba é um valor fixo agora
+                    if (currentSyllable != NULL) { // && wordList.count > 0) { // Removido a verificação de wordList.count
                         Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
                         DrawTextEx(textFont, currentSyllable, syllablePos, 60, 0, BLUE);
                     } else {
@@ -243,42 +257,20 @@ int main(void)
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     // Raygui: Desenha o campo de input E processa o input do teclado se playerInputEditMode for true
                     // Retorna true quando Enter é pressionado E está em modo de edição
-                    // (explicacao 16) Modificada a lógica de processamento do input do jogador
+                    // (explicacao 32) Simplificada a lógica do GuiTextBox para apenas passar o turno
                     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode)) {
                         TraceLog(LOG_INFO, TextFormat("Player submitted: '%s'", playerInput));
 
-                        bool isValid = checkWord(playerInput, currentSyllable, &wordList);
+                        // bool isValid = checkWord(playerInput, currentSyllable, &wordList); // (explicacao 32) Desativado a validação
 
-                        if (isValid){
-                            TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
-                            // Palavra válida: Passa o turno
-                             currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
-                             bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
-                             currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba para o próximo jogador
-                             TraceLog(LOG_INFO, TextFormat("Turno de %s. Nova silaba: %s", players[currentPlayerIndex].name, currentSyllable));
+                        // (explicacao 32) Sempre passa o turno no modo de teste
+                        TraceLog(LOG_INFO, "Modo de teste: Passando turno sem validar palavra.");
+                        currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
+                        bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
+                        // currentSyllable = SelectRandomSyllable(&wordList); // (explicacao 32) Desativado a seleção de nova sílaba
+                        TraceLog(LOG_INFO, TextFormat("Turno de %s. Silaba: %s", players[currentPlayerIndex].name, currentSyllable));
 
-                        } else {
-                             TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
-                            // Palavra inválida: Jogador atual perde uma vida
-                             players[currentPlayerIndex].lives--;
-                              TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", players[currentPlayerIndex].name, players[currentPlayerIndex].lives));
-
-                             if (players[currentPlayerIndex].lives <= 0) {
-                                 TraceLog(LOG_INFO, TextFormat("%s foi eliminado!", players[currentPlayerIndex].name));
-                                 // Aqui você implementaria a lógica de fim de jogo se apenas 1 jogador sobrar
-                                 // Por enquanto, apenas registra no log e o jogo continua
-                             }
-
-                            // Mesmo com palavra inválida, o turno geralmente passa no Bomb Party original
-                            // ou o jogador perde a vida e o turno continua para ele se ele tiver vidas?
-                            // Vamos seguir a regra de passar o turno após tentar, válida ou não (como no tempo esgotado)
-                             currentPlayerIndex = (currentPlayerIndex + 1) % NUM_PLAYERS;
-                             bombTimer = initialBombTime; // Reseta o timer para o próximo jogador
-                             currentSyllable = SelectRandomSyllable(&wordList); // Nova sílaba
-                             TraceLog(LOG_INFO, TextFormat("Turno de %s. Nova silaba: %s", players[currentPlayerIndex].name, currentSyllable));
-                        }
-
-                         playerInput[0] = '\0'; // Reseta o input do usuário após a tentativa
+                        playerInput[0] = '\0'; // Reseta o input do usuário após a tentativa
                     }
 
                     // (explicacao 17) Cálculo para desenhar a seta apontando para o jogador atual
@@ -293,9 +285,7 @@ int main(void)
 
                          // Calcula o ângulo em radianos
                          float angle_radians = atan2f(direction.y, direction.x);
-                         float angle_degrees = angle_radians * RAD2DEG; // Raylib define RAD2DEG, não RAD2RAD, correção: usar RAD2DEG
-
-                         //float angle_degrees = angle_radians * (180.0f / PI); // Alternativa manual
+                         float angle_degrees = angle_radians * RAD2DEG; // Raylib define RAD2DEG, está correto.
 
                          // Ajusta a rotação se a textura da seta não aponta para a direita (0 graus) por padrão.
                          // Se sua seta aponta para cima na textura, adicione -90.0f. Se aponta para baixo, +90.0f.
@@ -327,8 +317,8 @@ int main(void)
                     };
 
                     float sparkScale = 0.05f;
-                    // (explicacao 19) sparkRotation está em radianos, DEG2RAD é uma macro do Raylib, está correto.
-                    float sparkRotation = -30.0f; // * DEG2RAD; // Removido * DEG2RAD pois a rotação em DrawTextureEx/Pro é em GRAUS
+                    // (explicacao 19) sparkRotation é em graus para DrawTextureEx/Pro
+                    float sparkRotation = -30.0f;
 
 
                     Vector2 sparkPosition = {
@@ -361,7 +351,8 @@ int main(void)
 
     TraceLog(LOG_INFO, "Loop principal terminou. Iniciando limpeza de recursos.");
 
-    UnloadWordList(&wordList);
+    // (explicacao 33) Desativado o descarregamento da lista de palavras
+    //UnloadWordList(&wordList);
 
     if (customFont.texture.id != 0 && textFont.texture.id != GetFontDefault().texture.id)
     {
