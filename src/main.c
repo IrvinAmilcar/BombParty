@@ -7,9 +7,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include "wordlist.h"
 #include "game.h"
+#include "player.h"
+
+#define NUM_PLAYERS 2
+Player players[NUM_PLAYERS];
+int currentPlayerIndex = 0;
+
 
 int main(void)
 {
@@ -22,7 +29,6 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "BombParty");
     ToggleFullscreen();
 
-    // Inicialização Raygui: Carrega o estilo padrão
     GuiLoadStyleDefault();
 
     Font customFont = LoadFontEx("resources/fonts/Montserrat-Regular.ttf", 40, NULL, 0);
@@ -130,7 +136,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-
+            float rotacao = 90.0f;
             switch (currentGameState)
             {
                 case MENU:
@@ -148,7 +154,7 @@ int main(void)
                     DrawTextEx(textFont, menuText, (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, menuText, 20, 0).x/2, currentActualHeight/2}, 20, 0, DARKGRAY);
  
                 } break;
-
+                
                 case PLAYING:
                 {
                     DrawTextEx(textFont, "Estado: JOGANDO", (Vector2){10, 10}, 20, 0, BLACK);
@@ -159,6 +165,8 @@ int main(void)
                     } else {
                            DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
+
+                    //float rotacao = 90.0f;
 
                     // Raygui: Define a área do campo de input
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
@@ -173,6 +181,8 @@ int main(void)
                             //PRECISAMOS AQUI, ADICIONAR A LOGICA DE MOVER A SETA PRO PROXIMO JOGADOR!
                             currentSyllable = SelectRandomSyllable(&wordList); //Seleciona a proxima silaba
                             playerInput[0] = '\0'; //Reseta o input do usuário!
+                            rotacao += 90.0f;
+                            bombTimer = initialBombTime;
 
                         } else {
                             playerInput[0] = '\0'; //Reseta o input do usuário!
@@ -182,7 +192,7 @@ int main(void)
                     }
 
                     float arrowScale = 0.4f;
-                    float arrowRotation = 0.0f;
+                    float arrowRotation = rotacao;
                     
                     //Esse calculo serve pra por um elemento no meio da tela obviamente sem o 9, aquilo foi só pra ajustar!!
                     //arrow centralizada:
