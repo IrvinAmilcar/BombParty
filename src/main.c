@@ -173,13 +173,6 @@ int main(void)
 
                 case PLAYING:
                 {
-                    if (game.currentSyllable != NULL && wordList.count > 0) {
-                        Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, game.currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
-                        DrawTextEx(textFont, game.currentSyllable, syllablePos, 60, 0, BLUE);
-                    } else {
-                            DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
-                    }
-
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
 
@@ -189,7 +182,7 @@ int main(void)
 
                          Vector2 direction = {
                             targetPlayerPos.x - arrowPivot.x,
-                            targetPlayerPos.y - arrowPivot.y
+                            targetPlayerPos.y - targetPlayerPos.y
                          };
 
                          float angle_radians = atan2f(direction.y, direction.x);
@@ -226,6 +219,14 @@ int main(void)
                     if (sparkTexture.id != 0) DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", game.bombTimer), (Vector2){currentActualWidth - 150, 10}, 25, 0, (game.bombTimer <= 5.0f ? RED : DARKGRAY));
+
+                    // Desenha a sílaba atual por último
+                    if (game.currentSyllable != NULL && wordList.count > 0) {
+                        Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, game.currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
+                        DrawTextEx(textFont, game.currentSyllable, syllablePos, 60, 0, BLUE);
+                    } else {
+                            DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
+                    }
 
                 } break;
 
