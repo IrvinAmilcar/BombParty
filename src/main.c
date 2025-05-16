@@ -289,27 +289,27 @@ int main(void)
 
                     // Draw the arrow
                     if (arrowTexture.id != 0 && game.currentPlayer != NULL) {
-                         Vector2 arrowPivot = playerPositionsCenter;
-                         Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
+                        Vector2 arrowPivot = playerPositionsCenter;
+                        Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
 
-                         Vector2 direction = {
+                        Vector2 direction = {
                             targetPlayerPos.x - arrowPivot.x,
                             targetPlayerPos.y - arrowPivot.y
-                         };
+                        };
 
-                         float angle_radians = atan2f(direction.y, direction.x);
-                         float angle_degrees = angle_radians * RAD2DEG;
-                         float arrowDrawingRotation = angle_degrees + 90.0f;
+                        float angle_radians = atan2f(direction.y, direction.x);
+                        float angle_degrees = angle_radians * RAD2DEG;
+                        float arrowDrawingRotation = angle_degrees + 0.0f;
 
-                         float arrowScale = 0.4f;
+                        float arrowScale = 0.4f;
 
-                         Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
-                         Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
-                         Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
+                        Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
+                        Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
+                        Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
 
-                         DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
+                        DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
                     } else if (game.currentPlayer == NULL && game.numPlayers > 0) {
-                         TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
+                        TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
                     }
 
 
