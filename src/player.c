@@ -9,7 +9,7 @@ Vector2 CalculatePlayerPosition(int playerIndex, int totalPlayers, Vector2 cente
         return center;
     }
 
-    float angle_degrees = (360.0f / totalPlayers) * playerIndex + 90.0f;
+    float angle_degrees = (360.0f / totalPlayers) * playerIndex + 180.0f;
     float angle_radians = angle_degrees * DEG2RAD;
 
     Vector2 position;
