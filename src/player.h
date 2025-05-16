@@ -26,6 +26,6 @@ Player* CreatePlayer(const char* name, int lives, Vector2 position);
 
 void AddPlayer(Player** head, Player* newPlayer);
 
-void RemoveAllPlayers(Player** head, Player* playerToRemove);
+void RemoveAllPlayers(Player** head);
 
 #endif
