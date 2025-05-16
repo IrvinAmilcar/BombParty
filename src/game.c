@@ -1,47 +1,128 @@
 #include "game.h"
 #include "raylib.h"
 #include "wordlist.h"
-#include "player.h"
+#include "player.h" 
 #include "raygui.h"
 #include <stdio.h>
+#include <stdlib.h> 
 #include <string.h>
 
-// --- Funções Auxiliares (mantidas static) ---
-
-// Conta o número de jogadores com vidas > 0
-static int CountLivingPlayers(const Player players[], int numPlayers) {
-    int livingCount = 0;
-    for (int i = 0; i < numPlayers; ++i) {
-        if (players[i].lives > 0) {
-            livingCount++;
+static void RemovePlayerFromList(GameManager* game, Player* playerToRemove) {
+    if (game == NULL || playerToRemove == NULL || game->numPlayers <= 1) {
+        if (game != NULL && game->numPlayers <= 1) {
+             TraceLog(LOG_INFO, "RemovePlayerFromList: Tentativa de remover o ultimo ou penultimo jogador. Fim de jogo se o ultimo.");
+        } else {
+             TraceLog(LOG_WARNING, "RemovePlayerFromList: Chamada invalida (game ou playerToRemove nulo).");
         }
-    }
-    return livingCount;
-}
-
-// Encontra o índice do próximo jogador vivo no ciclo, começando APÓS o startingIndex
-// Retorna -1 se nenhum jogador vivo for encontrado (todos eliminados)
-static int FindNextLivingPlayerIndex(const Player players[], int numPlayers, int startingIndex) {
-    if (numPlayers <= 0) return -1;
-
-    int currentIndex = (startingIndex + 1) % numPlayers;
-    int playersChecked = 0; // Contador para evitar loop infinito caso não haja jogadores vivos
-
-    while (playersChecked < numPlayers) {
-        if (players[currentIndex].lives > 0) {
-            return currentIndex;
-        }
-        currentIndex = (currentIndex + 1) % numPlayers;
-        playersChecked++;
+        return;
     }
 
-    return -1; // Nenhum jogador vivo encontrado
+    TraceLog(LOG_INFO, TextFormat("Removendo jogador %s (original index %d) da lista circular.", playerToRemove->name, playerToRemove->originalIndex));
+
+    playerToRemove->prev->next = playerToRemove->next;
+    playerToRemove->next->prev = playerToRemove->prev;
+
+    if (game->firstPlayer == playerToRemove) {
+        game->firstPlayer = playerToRemove->next;
+         TraceLog(LOG_INFO, "RemovePlayerFromList: Primeiro jogador atualizado.");
+    }
+
+     if (game->currentPlayer == playerToRemove) {
+         TraceLog(LOG_INFO, "RemovePlayerFromList: Jogador atual removido. Proximo jogador eh o novo currentPlayer.");
+     }
+
+
+    game->numPlayers--;
+
+    TraceLog(LOG_INFO, TextFormat("Jogador %s removido. Jogadores restantes: %d.", playerToRemove->name, game->numPlayers));
 }
 
-// --- Novas Funções para Refatorar UpdatePlayingState ---
 
-// Processa a entrada do jogador e verifica a palavra
-// Retorna true se a palavra for válida ou inválida (turno passa), false se o input ainda está sendo editado
+void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombTime, WordList* wordList) {
+    if (game == NULL || numInitialPlayers <= 0) {
+        TraceLog(LOG_ERROR, "InitializeGame: GameManager nulo ou numero de jogadores invalido.");
+        if (game != NULL) {
+            game->currentPlayer = NULL;
+            game->firstPlayer = NULL;
+            game->numPlayers = 0;
+            game->allocatedPlayersArrayBase = NULL;
+        }
+        return;
+    }
+
+     TraceLog(LOG_INFO, TextFormat("InitializeGame: Iniciando com %d jogadores (lista circular).", numInitialPlayers));
+
+    Player* playersArray = (Player*)malloc(numInitialPlayers * sizeof(Player));
+    if (playersArray == NULL) {
+        TraceLog(LOG_FATAL, "InitializeGame: Falha ao alocar memoria para jogadores!");
+        game->currentPlayer = NULL;
+        game->firstPlayer = NULL;
+        game->numPlayers = 0;
+        game->allocatedPlayersArrayBase = NULL;
+        return;
+    }
+    
+    TraceLog(LOG_INFO, TextFormat("Memoria alocada para %d jogadores em %p", numInitialPlayers, (void*)playersArray));
+
+    game->allocatedPlayersArrayBase = playersArray;
+
+    for (int i = 0; i < numInitialPlayers; ++i) {
+        snprintf(playersArray[i].name, MAX_PLAYER_NAME_LEN, "Jogador %d", i + 1);
+        playersArray[i].name[MAX_PLAYER_NAME_LEN - 1] = '\0';
+        playersArray[i].lives = 2; 
+        playersArray[i].screenPosition = (Vector2){0, 0};
+        playersArray[i].originalIndex = i;
+
+         playersArray[i].next = NULL;
+         playersArray[i].prev = NULL;
+    }
+
+    for (int i = 0; i < numInitialPlayers; ++i) {
+        playersArray[i].next = &playersArray[(i + 1) % numInitialPlayers];
+        playersArray[i].prev = &playersArray[(i - 1 + numInitialPlayers) % numInitialPlayers]; 
+    }
+
+    game->firstPlayer = &playersArray[0]; 
+    game->currentPlayer = game->firstPlayer; 
+    game->numPlayers = numInitialPlayers; 
+
+    game->initialBombTime = initialBombTime;
+    game->bombTimer = initialBombTime;
+    game->currentSyllable = SelectRandomSyllable(wordList); 
+
+    ResetUsedWordList(); 
+
+    TraceLog(LOG_INFO, TextFormat("InitializeGame: Jogo configurado com lista circular. Silaba inicial: %s", game->currentSyllable));
+}
+
+void ShutdownGame(GameManager* game) {
+    if (game == NULL) {
+        TraceLog(LOG_WARNING, "ShutdownGame: GameManager nulo. Nada para liberar.");
+        return;
+    }
+
+    TraceLog(LOG_INFO, "ShutdownGame: Liberando memoria dos jogadores (lista circular)...");
+
+    if (game->allocatedPlayersArrayBase != NULL) {
+         TraceLog(LOG_INFO, TextFormat("ShutdownGame: Liberando bloco alocado em %p", (void*)game->allocatedPlayersArrayBase));
+         free(game->allocatedPlayersArrayBase);
+         game->allocatedPlayersArrayBase = NULL; 
+         TraceLog(LOG_INFO, "ShutdownGame: Bloco de jogadores liberado.");
+    } else {
+         TraceLog(LOG_INFO, "ShutdownGame: Ponteiro para base do array alocado nulo. Nada para liberar.");
+    }
+
+    game->currentPlayer = NULL;
+    game->firstPlayer = NULL;
+    game->numPlayers = 0;
+    game->currentSyllable = NULL; 
+
+
+    ResetUsedWordList(); 
+
+    TraceLog(LOG_INFO, "ShutdownGame: Recursos do jogo liberados.");
+}
+
 static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playerInputEditMode, WordList* wordList) {
     Rectangle inputBounds = {GetScreenWidth()/2 - 150, GetScreenHeight() - 80, 300, 40 };
     if (GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, *playerInputEditMode)) {
@@ -51,118 +132,89 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
 
         if (isValid){
             TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
-             // turnShouldPass = true; // O chamador decidirá se o turno passa
-             playerInput[0] = '\0'; // Limpa o input após submissão
-             return true; // Indica que o input foi processado
+             playerInput[0] = '\0'; 
+             return true; 
         } else {
              TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
-             game->players[game->currentPlayerIndex].lives--;
-              TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->players[game->currentPlayerIndex].name, game->players[game->currentPlayerIndex].lives));
-             // turnShouldPass = true; // O chamador decidirá se o turno passa
-             playerInput[0] = '\0'; // Limpa o input após submissão
-             return true; // Indica que o input foi processado
+             game->currentPlayer->lives--;
+              TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
+             playerInput[0] = '\0'; 
+             return true; 
         }
     }
-    return false; // Input ainda está sendo editado
+    return false; 
 }
 
-// Lida com a lógica do timer da bomba
-// Retorna true se o timer esgotou, false caso contrário
 static bool HandleBombTimer(GameManager* game, float deltaTime) {
     game->bombTimer -= deltaTime;
 
     if (game->bombTimer <= 0.0f) {
         game->bombTimer = 0.0f;
-        TraceLog(LOG_INFO, TextFormat("Tempo esgotado para %s!", game->players[game->currentPlayerIndex].name));
-        game->players[game->currentPlayerIndex].lives--;
-        TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->players[game->currentPlayerIndex].name, game->players[game->currentPlayerIndex].lives));
-        return true; // Indica que o timer esgotou
+        TraceLog(LOG_INFO, TextFormat("Tempo esgotado para %s!", game->currentPlayer->name));
+        game->currentPlayer->lives--;
+        TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
+        return true; 
     }
-    return false; // Timer ainda não esgotou
+    return false; 
 }
 
-// Passa o turno para o próximo jogador vivo
-// Retorna o novo GameState (PLAYING ou GAME_OVER)
 static GameState PassTurn(GameManager* game, WordList* wordList) {
-     int livingPlayersCount = CountLivingPlayers(game->players, game->numPlayers);
+     if (game == NULL || game->currentPlayer == NULL || game->numPlayers <= 0) {
+         TraceLog(LOG_ERROR, "PassTurn: GameManager, currentPlayer nulo ou numPlayers <= 0. Forcando fim de jogo.");
+         return GAME_OVER;
+     }
 
-    if (livingPlayersCount <= 1) {
-        TraceLog(LOG_INFO, TextFormat("PassTurn: Jogo terminou! Jogadores vivos restantes: %d", livingPlayersCount));
+     bool currentPlayerWasEliminated = false;
+
+     if (game->currentPlayer->lives <= 0) {
+         TraceLog(LOG_INFO, TextFormat("PassTurn: Jogador %s (original index %d) foi eliminado.", game->currentPlayer->name, game->currentPlayer->originalIndex));
+         if (game->numPlayers > 1) {
+            RemovePlayerFromList(game, game->currentPlayer); 
+            currentPlayerWasEliminated = true; // flag
+         } else {
+             TraceLog(LOG_INFO, "PassTurn: O ultimo jogador vivo foi eliminado.");
+              return GAME_OVER;
+         }
+     }
+
+    if (game->numPlayers <= 1) {
+        TraceLog(LOG_INFO, TextFormat("PassTurn: Jogo terminou! Jogadores vivos restantes: %d", game->numPlayers));
         return GAME_OVER;
     }
 
-    int nextPlayer = FindNextLivingPlayerIndex(game->players, game->numPlayers, game->currentPlayerIndex);
-
-    if (nextPlayer != -1) {
-        game->currentPlayerIndex = nextPlayer;
-        game->bombTimer = game->initialBombTime; // Reinicia o timer para o próximo jogador
-        game->currentSyllable = SelectRandomSyllable(wordList); // Seleciona nova sílaba
-        TraceLog(LOG_INFO, TextFormat("PassTurn: Turno de %s. Nova silaba: %s", game->players[game->currentPlayerIndex].name, game->currentSyllable));
-        return PLAYING; // Continua no estado PLAYING
-    } else {
-         // Isso não deve acontecer se livingPlayersCount > 1, mas como fallback:
-         TraceLog(LOG_ERROR, "PassTurn: Erro lógico crítico! Não foi possível encontrar o próximo jogador vivo. Forçando fim de jogo.");
-         return GAME_OVER;
+    if (!currentPlayerWasEliminated) {
+        game->currentPlayer = game->currentPlayer->next;
     }
+
+    game->bombTimer = game->initialBombTime;
+    game->currentSyllable = SelectRandomSyllable(wordList);
+
+    TraceLog(LOG_INFO, TextFormat("PassTurn: Turno de %s (original index %d). Nova silaba: %s", game->currentPlayer->name, game->currentPlayer->originalIndex, game->currentSyllable));
+
+    return PLAYING; 
 }
-
-
-// --- Função Principal de Update do Estado PLAYING (Refatorada) ---
 
 GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInput, bool* playerInputEditMode, WordList* wordList) {
+     if (game == NULL || game->currentPlayer == NULL || game->numPlayers <= 0) {
+        TraceLog(LOG_ERROR, "UpdatePlayingState: GameManager, currentPlayer nulo ou numPlayers <= 0. Forcando fim de jogo.");
+        return GAME_OVER;
+    }
 
-    bool turnEnded = false; // Flag para saber se o turno atual acabou
+    bool turnEnded = false; 
 
-    // 1. Lida com o timer da bomba
     if (HandleBombTimer(game, deltaTime)) {
-        turnEnded = true; // O turno acabou porque o tempo esgotou
+        turnEnded = true; 
     }
 
-    // 2. Processa a entrada do jogador (se o turno ainda não acabou pelo timer)
-    // Usa 'else if' para que apenas uma condição (timer ou input) determine o fim do turno
     else if (ProcessPlayerInput(game, playerInput, playerInputEditMode, wordList)) {
-        turnEnded = true; // O turno acabou porque o jogador submeteu uma palavra
+        turnEnded = true; 
     }
 
-    // 3. Se o turno acabou, passa para o próximo jogador ou termina o jogo
     if (turnEnded) {
-        return PassTurn(game, wordList); // Passa o turno e retorna o próximo estado (PLAYING ou GAME_OVER)
+        return PassTurn(game, wordList);
     }
 
-    // Se o turno não acabou, permanece no estado PLAYING
     return PLAYING;
-}
-
-// --- Outras Funções de Jogo (Exemplo - Adicione conforme necessário) ---
-
-// Inicializa um novo jogo (esta função seria chamada em main.c após seleção de jogadores e modo)
-void InitializeGame(GameManager* game, int numPlayers, float initialBombTime, WordList* wordList) {
-    // Assume-se que game->players já foi alocado dinamicamente em main.c
-    game->numPlayers = numPlayers;
-    game->initialBombTime = initialBombTime;
-    game->bombTimer = initialBombTime;
-    game->currentPlayerIndex = 0; // Começa com o primeiro jogador
-    game->currentSyllable = SelectRandomSyllable(wordList); // Seleciona a primeira sílaba
-    // A inicialização dos dados individuais dos jogadores (nome, vidas) deve ser feita em main.c
-    // ou em uma função separada chamada de main.c após a alocação.
-
-    TraceLog(LOG_INFO, TextFormat("InitializeGame: Jogo iniciado com %d jogadores. Silaba inicial: %s", game->numPlayers, game->currentSyllable));
-}
-
-// Limpa os recursos do jogo (esta função seria chamada em main.c ao sair do estado PLAYING)
-void ShutdownGame(GameManager* game) {
-    // Libera a memória alocada para os jogadores em main.c
-    if (game->players != NULL) {
-        free(game->players); // Libera o array de structs Player
-        game->players = NULL;
-    }
-    game->numPlayers = 0;
-    game->currentPlayerIndex = -1; // Índice inválido após desligamento
-    game->currentSyllable = NULL;
-
-    ResetUsedWordList(); // Reseta a lista de palavras usadas para o próximo jogo
-
-    TraceLog(LOG_INFO, "ShutdownGame: Recursos do jogo liberados.");
 }
 
 // --- Placeholder para outras funções de estado (Implementar em arquivos separados se o projeto crescer) ---

@@ -3,8 +3,9 @@
 
 #include "raylib.h"
 #include "wordlist.h"
-#include "player.h"
+#include "player.h" 
 #include <stdbool.h>
+#include <stdlib.h> 
 
 typedef enum GameState {
     MENU = 0,
@@ -26,20 +27,18 @@ typedef struct {
     float bombTimer;
     float initialBombTime;
     const char* currentSyllable;
-    int currentPlayerIndex;
-    Player* players;
+
+    Player* currentPlayer; 
+    Player* firstPlayer;   
     int numPlayers;
+
+    Player* allocatedPlayersArrayBase;
+
 } GameManager;
 
 GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInput, bool* playerInputEditMode, WordList* wordList);
 
-// --- Novos protótipos adicionados ---
-void InitializeGame(GameManager* game, int numPlayers, float initialBombTime, WordList* wordList);
+void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombTime, WordList* wordList);
 void ShutdownGame(GameManager* game);
-// --- Fim dos novos protótipos ---
-
-// - Funções de Update para outros estados (UpdateMenuState, UpdateGameOverState)
-// - Funções de Desenho para cada estado (DrawMenuState, DrawPlayingState, DrawGameOverState)
-// - Funções auxiliares de alto nível que podem ser usadas em múltiplos arquivos.
 
 #endif
