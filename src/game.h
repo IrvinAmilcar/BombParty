@@ -41,4 +41,10 @@ GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInp
 void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombTime, WordList* wordList);
 void ShutdownGame(GameManager* game);
 
+//Vai gerar um numero aleatorio de 1 - 4 pra definir os powerUPs!!
+int generatePowerUp();
+
+//Função pra aplicar os powerUPS:
+void applyPowerUp(Player *player, int powerUp);
+
 #endif

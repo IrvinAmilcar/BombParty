@@ -10,6 +10,7 @@ typedef struct Player {
     int lives;
     Vector2 screenPosition;
     int originalIndex;
+    int score;
 
     int powerUP;
 

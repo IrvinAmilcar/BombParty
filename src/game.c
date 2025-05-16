@@ -6,6 +6,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h> //Novo include pra função de gerar numeros aleatoros!
+
+int generatePowerUp() {
+    srand((unsigned int)time(NULL));
+    // Gera um número aleatório entre 1 e 4
+    return (rand() % 4) + 1;
+}
+
+//Função pra aplicar o powerUP: 
+//Dentro dessa função precisamos chamar as funções que aplicarão verdadeiramente os efeitos!
+void applyPowerUp(Player *player, int powerUp){
+    if (powerUp == 1) {
+        //Pausar a bomba por 10 segundos
+    } else if (powerUp == 2) {
+        //Inverter a ordem dos jogadores
+    } else if (powerUp == 3) {
+        //pular a vez
+    } else if (powerUp == 4) {
+        //trocar de silaba
+    }
+}
 
 static void RemovePlayerFromList(GameManager* game, Player* playerToRemove) {
     if (game == NULL || playerToRemove == NULL || game->numPlayers <= 0) {
@@ -90,6 +111,7 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
         playersArray[i].lives = 2;
         playersArray[i].screenPosition = (Vector2){0, 0};
         playersArray[i].originalIndex = i;
+        playersArray[i].score = 0;
 
          playersArray[i].next = NULL;
          playersArray[i].prev = NULL;
@@ -160,14 +182,16 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
 
     if (isValid){
         TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
-         playerInput[0] = '\0'; // Clear input buffer
-         return true; // Turn ends
+        game->currentPlayer->score++;
+        TraceLog(LOG_INFO, TextFormat("%s pontou! Score atual: %d", game->currentPlayer->name, game->currentPlayer->score));
+        playerInput[0] = '\0'; // Clear input buffer
+        return true; // Turn ends
     } else {
-         TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
-         game->currentPlayer->lives--;
-          TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
-         playerInput[0] = '\0'; // Clear input buffer
-         return true; // Turn ends
+        TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
+        game->currentPlayer->lives--;
+        TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
+        playerInput[0] = '\0'; // Clear input buffer
+        return true; // Turn ends
     }
 
     return false; // Should not be reached

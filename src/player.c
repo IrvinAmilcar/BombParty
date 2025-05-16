@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 Vector2 CalculatePlayerPosition(int playerIndex, int totalPlayers, Vector2 center, float radius) {
     if (totalPlayers <= 0) {

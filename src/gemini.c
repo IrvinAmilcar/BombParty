@@ -32,27 +32,38 @@ static size_t sbWrite(void *data, size_t size, size_t nmemb, void *userp) {
     return add;
 }
 
-void generate_word_list(const char *theme, const char *db_file, const char *output_file) {
-    char prompt[MAX_RESPOSTA];
-    snprintf(prompt, sizeof(prompt), "Liste palavras relacionadas ao tema '%s'.", theme);
-    
-    char response[MAX_RESPOSTA] = {0};
-    respt(prompt, response);
-    
-    FILE *out = fopen(output_file, "w");
-    if (!out) {
-        fprintf(stderr, "Erro ao abrir o arquivo de saída.\n");
+void generate_word_list(const char *theme, const char *db_file_path, const char *output_file_path) {
+    // Abre o arquivo do banco de dados para leitura
+    FILE *db_file = fopen(db_file_path, "r");
+    if (!db_file) {
+        fprintf(stderr, "Erro ao abrir o arquivo de banco de dados '%s'.\n", db_file_path);
         return;
     }
-    
-    // Divide a resposta em palavras e salva no arquivo
-    char *token = strtok(response, ", ");
-    int count = 0;
-    while (token != NULL) {
-        fprintf(out, "%s\n", token);
-        count++;
-        token = strtok(NULL, ", ");
+
+    // Cria o arquivo de saída para as palavras
+    FILE *output_file = fopen(output_file_path, "w");
+    if (!output_file) {
+        fprintf(stderr, "Erro ao abrir o arquivo de saída '%s'.\n", output_file_path);
+        fclose(db_file);
+        return;
     }
-    fclose(out);
-    printf("%d palavras relacionadas ao tema '%s' foram salvas em '%s'.\n", count, theme, output_file);
+
+    char line[MAX_RESPOSTA];
+    int count = 0;
+
+    // Lê cada linha do banco de dados e verifica se está relacionada ao tema
+    while (fgets(line, sizeof(line), db_file)) {
+        // Remove o caractere de nova linha, se presente
+        line[strcspn(line, "\n")] = '\0';
+
+        // Verifica se a palavra está relacionada ao tema (caso simples, sem análise semântica)
+        if (strstr(line, theme) != NULL) {
+            fprintf(output_file, "%s\n", line);
+            count++;
+        }
+    }
+
+    fclose(db_file);
+    fclose(output_file);
+    printf("%d palavras relacionadas ao tema '%s' foram salvas em '%s'.\n", count, theme, output_file_path);
 }
