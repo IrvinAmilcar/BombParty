@@ -9,6 +9,7 @@
 typedef enum GameState {
     MENU = 0,
     SELECT_PLAYERS,
+    SELECT_PALYERS_NAME,
     SELECT_MODE,
     LEADERBOARD,
     CREDITS,

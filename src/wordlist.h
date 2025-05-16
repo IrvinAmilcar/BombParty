@@ -7,7 +7,7 @@
 // Inclua game.h se ele contiver definições como MAX_WORD_LENGTH
 // Assumindo que game.h define:
 // MAX_WORD_LENGTH, MAX_SYLLABLE_LENGTH, MIN_SYLLABLE_LENGTH, MAX_PLAYER_INPUT_CHARS
-#include "game.h"
+
 
 // Estrutura para armazenar a lista de palavras e sílabas usando buffer contínuo
 typedef struct {
