@@ -37,3 +37,65 @@ void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color life
 
     DrawTextEx(font, livesText, livesPos, 18, 0, lifeColor);
 }
+
+Player *CreatePlayer(const char* name, int lives, Vector2 position){
+    Player *newPlayer = malloc(sizeof(Player));
+
+    if (newPlayer == NULL){
+        return NULL;
+    }
+
+    strncpy(newPlayer->name, name, MAX_PLAYER_NAME_LEN);
+    newPlayer->name[MAX_PLAYER_NAME_LEN - 1] = '\0';
+
+    newPlayer -> lives = lives;
+    newPlayer -> screenPosition = position;
+    newPlayer -> next = NULL;
+    newPlayer -> prev = NULL;
+
+    return newPlayer;
+}
+
+void AddPlayer(Player** head, Player* newPlayer){
+
+    //Primeiro caso (Nenhum elemento adicionado a lista!)
+    if ((*head) == NULL){
+        *head = newPlayer;
+        newPlayer -> next = newPlayer;
+        newPlayer -> prev = newPlayer;
+
+    } else {
+        // Lista já possui pelo menos um elemento
+        Player* ultimo = (*head)->prev;
+
+        // Ajusta os ponteiros para inserir no início
+        newPlayer->next = *head;
+        newPlayer->prev = ultimo;
+        (*head)->prev = newPlayer;
+        ultimo->next = newPlayer;
+
+        // Atualiza o head para o novo jogador
+        *head = newPlayer;
+    }
+}
+
+void RemoveAllPlayers(Player **head) {
+    if (*head == NULL) {
+        return; // Lista já vazia
+    }
+
+    Player *current = *head;
+    Player *temp;
+
+    // Percorrer todos os jogadores da lista
+    do {
+        temp = current;
+        current = current->next;
+
+        // Liberar a memória do jogador atual
+        free(temp);
+    } while (current != *head); // Termina quando volta para o primeiro jogador
+
+    // Definir o head como NULL para indicar que a lista está vazia
+    *head = NULL;
+}

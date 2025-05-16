@@ -25,14 +25,18 @@ typedef enum GameState {
 typedef struct {
     float bombTimer;
     float initialBombTime;
-    const char* currentSyllable; 
-    int currentPlayerIndex; 
+    const char* currentSyllable;
+    int currentPlayerIndex;
     Player* players;
-    int numPlayers;              
-    // int winnerPlayerIndex;    // Opcional
+    int numPlayers;
 } GameManager;
 
 GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInput, bool* playerInputEditMode, WordList* wordList);
+
+// --- Novos protótipos adicionados ---
+void InitializeGame(GameManager* game, int numPlayers, float initialBombTime, WordList* wordList);
+void ShutdownGame(GameManager* game);
+// --- Fim dos novos protótipos ---
 
 // - Funções de Update para outros estados (UpdateMenuState, UpdateGameOverState)
 // - Funções de Desenho para cada estado (DrawMenuState, DrawPlayingState, DrawGameOverState)
