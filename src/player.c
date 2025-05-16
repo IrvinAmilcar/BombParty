@@ -52,6 +52,7 @@ Player *CreatePlayer(const char* name, int lives, Vector2 position){
     newPlayer -> screenPosition = position;
     newPlayer -> next = NULL;
     newPlayer -> prev = NULL;
+    newPlayer -> powerUP = 0;
 
     return newPlayer;
 }

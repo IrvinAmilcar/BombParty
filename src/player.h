@@ -11,6 +11,8 @@ typedef struct Player {
     Vector2 screenPosition;
     int originalIndex;
 
+    int powerUP;
+
     struct Player *next;
     struct Player *prev;
 
