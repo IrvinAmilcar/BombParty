@@ -35,5 +35,7 @@ void ResetUsedWordList(); // Assuming this is used outside
 // Função principal para verificar a palavra do jogador
 bool checkWord(const char *playerInput, const char *currentSyllable, WordList *wordList);
 
+//Função pra o modo louco, verificar se a palavra ta no arquivo gerado pela IA!!!!!!!
+bool isWordInAIlist(const char *word, const char *ai_list_file);
 
 #endif // WORDLIST_H

@@ -367,3 +367,25 @@ bool checkWord(const char *playerInput, const char *currentSyllable, WordList *w
     addWordToUsedList(playerInput); // Adiciona a palavra à lista de usadas
     return true;
 }
+
+//Função pro modo louco, verifica se a palavra ta no arquivo gerado pela ia!
+bool isWordInAIlist(const char *word, const char *ai_list_file) {
+    FILE *file = fopen(ai_list_file, "r");
+    if (!file) {
+        fprintf(stderr, "Erro ao abrir o arquivo %s.\n", ai_list_file);
+        return false;
+    }
+
+    char line[100];
+    while (fgets(line, sizeof(line), file)) {
+        // Remove a nova linha do final
+        line[strcspn(line, "\n")] = '\0';
+        if (strcmp(line, word) == 0) {
+            fclose(file);
+            return true;
+        }
+    }
+
+    fclose(file);
+    return false;
+}
