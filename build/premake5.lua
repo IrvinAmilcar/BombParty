@@ -176,6 +176,8 @@ if (downloadRaylib) then
         flags { "ShadowedVariables"}
         platform_defines()
 
+        libdirs {"../include/curl/lib"}
+
         filter "action:vs*"
             defines{"_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS"}
             dependson {"raylib"}
