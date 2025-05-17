@@ -174,27 +174,26 @@ int main(void)
 
             case PLAYING:
             {
-                 if (game.currentPlayer == NULL || game.numPlayers <= 0) {
-                     TraceLog(LOG_WARNING, "PLAYING state entered with no current player or zero players. Transitioning to GAME_OVER.");
-                     currentGameState = GAME_OVER;
-                 } else {
+                if (game.currentPlayer == NULL || game.numPlayers <= 0) {
+                    TraceLog(LOG_WARNING, "PLAYING state entered with no current player or zero players. Transitioning to GAME_OVER.");
+                    currentGameState = GAME_OVER;
+                } else {
                     currentGameState = UpdatePlayingState(&game, deltaTime, playerInput, &playerInputEditMode, &wordList);
-                 }
+                }
 
             } break;
 
             case GAME_OVER:
             {
-                 // --- Add winner to leaderboard using the function from leaderboard.c ---
-                 if (game.numPlayers == 1 && game.firstPlayer != NULL) {
-                     Player* winner = game.firstPlayer;
-                     AddToLeaderboard(winner->name, winner->score); // Call AddToLeaderboard
-                     TraceLog(LOG_INFO, TextFormat("Vencedor %s com score %d processado para leaderboard.", winner->name, winner->score));
-                 } else if (game.numPlayers == 0) {
-                      TraceLog(LOG_INFO, "Nenhum vencedor para adicionar ao leaderboard.");
-                 }
-                 // --- End Add winner to leaderboard ---
-
+                // --- Add winner to leaderboard using the function from leaderboard.c ---
+                if (game.numPlayers == 1 && game.firstPlayer != NULL) {
+                    Player* winner = game.firstPlayer;
+                    AddToLeaderboard(winner->name, winner->score); // Call AddToLeaderboard
+                    TraceLog(LOG_INFO, TextFormat("Vencedor %s com score %d processado para leaderboard.", winner->name, winner->score));
+                } else if (game.numPlayers == 0) {
+                    TraceLog(LOG_INFO, "Nenhum vencedor para adicionar ao leaderboard.");
+                }
+                // --- End Add winner to leaderboard ---
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 {
                     ShutdownGame(&game);
@@ -204,7 +203,7 @@ int main(void)
 
             case LEADERBOARD:
             {
-                 // No update logic needed here, just handle input for going back
+                // No update logic needed here, just handle input for going back
                 if (IsKeyPressed(KEY_BACKSPACE)) {
                     currentGameState = MENU;
                 }
@@ -225,10 +224,10 @@ int main(void)
 
             if ((currentGameState == PLAYING || currentGameState == GAME_OVER) && game.allocatedPlayersArrayBase != NULL && numPlayersSelectedInMenu > 0) {
 
-                 for (int i = 0; i < numPlayersSelectedInMenu; ++i) {
-                     Player* player = &game.allocatedPlayersArrayBase[i];
+                for (int i = 0; i < numPlayersSelectedInMenu; ++i) {
+                    Player* player = &game.allocatedPlayersArrayBase[i];
 
-                     if (player->lives > 0) {
+                    if (player->lives > 0) {
                         player->screenPosition = CalculatePlayerPosition(player->originalIndex, numPlayersSelectedInMenu, playerPositionsCenter, playerPositionsRadius);
 
                         Color nameColor = DARKGRAY;
@@ -239,11 +238,11 @@ int main(void)
                         }
 
                         DrawPlayerInfo(player, textFont, nameColor, lifeColor);
-                     }
-                 }
+                    }
+                }
 
             } else if ((currentGameState == PLAYING || currentGameState == GAME_OVER) && (game.allocatedPlayersArrayBase == NULL || numPlayersSelectedInMenu == 0)) {
-                 DrawText("Erro: Jogadores nao inicializados corretamente.", 20, 20, 20, RED);
+                DrawText("Erro: Jogadores nao inicializados corretamente.", 20, 20, 20, RED);
             }
 
 
@@ -312,27 +311,27 @@ int main(void)
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
 
                     if (arrowTexture.id != 0 && game.currentPlayer != NULL) {
-                         Vector2 arrowPivot = playerPositionsCenter;
-                         Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
+                        Vector2 arrowPivot = playerPositionsCenter;
+                        Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
 
-                         Vector2 direction = {
+                        Vector2 direction = {
                             targetPlayerPos.x - arrowPivot.x,
                             targetPlayerPos.y - arrowPivot.y
-                         };
+                        };
 
-                         float angle_radians = atan2f(direction.y, direction.x);
-                         float angle_degrees = angle_radians * RAD2DEG;
-                         float arrowDrawingRotation = angle_degrees + 0.0f;
+                        float angle_radians = atan2f(direction.y, direction.x);
+                        float angle_degrees = angle_radians * RAD2DEG;
+                        float arrowDrawingRotation = angle_degrees + 0.0f;
 
-                         float arrowScale = 0.4f;
+                        float arrowScale = 0.4f;
 
-                         Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
-                         Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
-                         Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
+                        Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
+                        Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
+                        Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
 
                          DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
                     } else if (game.currentPlayer == NULL && (currentGameState == PLAYING || currentGameState == GAME_OVER) && game.numPlayers > 0) {
-                         TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
+                        TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
                     }
 
 
@@ -377,21 +376,21 @@ int main(void)
                     char winnerText[100] = {0};
 
                     if (game.numPlayers == 1 && game.firstPlayer != NULL) {
-                         Player* winner = game.firstPlayer;
-                         if (winner != NULL) {
-                             snprintf(winnerText, sizeof(winnerText), "%s venceu! Score: %d", winner->name, winner->score);
-                         } else {
-                             strncpy(winnerText, "Erro ao determinar vencedor.", sizeof(winnerText) -1);
-                             winnerText[sizeof(winnerText)-1] = '\0';
-                         }
+                        Player* winner = game.firstPlayer;
+                        if (winner != NULL) {
+                            snprintf(winnerText, sizeof(winnerText), "%s venceu! Score: %d", winner->name, winner->score);
+                        } else {
+                            strncpy(winnerText, "Erro ao determinar vencedor.", sizeof(winnerText) -1);
+                            winnerText[sizeof(winnerText)-1] = '\0';
+                        }
 
                     } else if (game.numPlayers == 0) {
-                         strncpy(winnerText, "Todos foram eliminados!", sizeof(winnerText) -1);
-                         winnerText[sizeof(winnerText)-1] = '\0';
+                        strncpy(winnerText, "Todos foram eliminados!", sizeof(winnerText) -1);
+                        winnerText[sizeof(winnerText)-1] = '\0';
                     }
                     else {
-                         strncpy(winnerText, "Nenhum vencedor claro (erro ou multiplos jogadores restantes).", sizeof(winnerText) -1);
-                         winnerText[sizeof(winnerText)-1] = '\0';
+                        strncpy(winnerText, "Nenhum vencedor claro (erro ou multiplos jogadores restantes).", sizeof(winnerText) -1);
+                        winnerText[sizeof(winnerText)-1] = '\0';
                     }
 
                     DrawTextEx(textFont, gameOverText, (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, gameOverText, 40, 0).x/2, currentActualHeight/3}, 40, 0, DARKGRAY);
