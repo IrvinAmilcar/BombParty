@@ -176,25 +176,63 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
         return false;
     }
 
-    TraceLog(LOG_INFO, TextFormat("Processing submitted input: '%s'", playerInput));
+    if (selectedMode == 0){
 
-    bool isValid = checkWord(playerInput, game->currentSyllable, wordList);
+        TraceLog(LOG_INFO, TextFormat("Processing submitted input: '%s'", playerInput));
 
-    if (isValid){
-        TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
-        game->currentPlayer->score++;
-        TraceLog(LOG_INFO, TextFormat("%s pontou! Score atual: %d", game->currentPlayer->name, game->currentPlayer->score));
-        playerInput[0] = '\0'; // Clear input buffer
-        return true; // Turn ends
+        bool isValid = checkWord(playerInput, game->currentSyllable, wordList);
+
+        if (isValid){
+            TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
+            game->currentPlayer->score++;
+            TraceLog(LOG_INFO, TextFormat("%s pontou! Score atual: %d", game->currentPlayer->name, game->currentPlayer->score));
+            playerInput[0] = '\0'; // Clear input buffer
+            return true; // Turn ends
+        } else {
+            TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
+            game->currentPlayer->lives--;
+            TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
+            playerInput[0] = '\0'; // Clear input buffer
+            return true; // Turn ends
+        }
+
+        return false; // Should not be reached
+
     } else {
-        TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
-        game->currentPlayer->lives--;
-        TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
-        playerInput[0] = '\0'; // Clear input buffer
-        return true; // Turn ends
+
+        FILE *aiFile = fopen("resources/data/palavras_da_ia.txt", "r");
+
+        TraceLog(LOG_INFO, TextFormat("Processing submitted input: '%s'", playerInput));
+
+        bool isValid = checkWord(playerInput, game->currentSyllable, wordList);
+        
+        if (isValid){
+            TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida!", playerInput));
+            game->currentPlayer->score++;
+            TraceLog(LOG_INFO, TextFormat("%s pontou! Score atual: %d", game->currentPlayer->name, game->currentPlayer->score));
+            playerInput[0] = '\0'; // Clear input buffer
+            
+            bool isValid2 = isWordInAIlist(playerInput, aiFile);
+            if (isValid2){
+                TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida pela IA!", playerInput));
+                game ->  currentPlayer -> powerUP = generatePowerUp(); //Player ativo recebe um powerUP (1 - 4)!
+            }
+            fclose(aiFile);
+            return true; // Turn ends
+        } else {
+            TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
+            game->currentPlayer->lives--;
+            TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
+            playerInput[0] = '\0'; // Clear input buffer
+            fclose(aiFile);
+            return true; // Turn ends
+        }
+        fclose(aiFile);
+        return false; 
+
     }
 
-    return false; // Should not be reached
+    
 }
 
 

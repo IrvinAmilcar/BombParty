@@ -84,8 +84,6 @@ int main(void)
     int selectedPlayersIndex = 0;
     const int totalPlayerOptions = 3;
 
-    int selectedMode = 0;
-
     int numPlayersSelectedInMenu = 0;
 
     float initialBombTime_value = 15.0f;
@@ -329,7 +327,7 @@ int main(void)
                         Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
                         Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
 
-                         DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
+                        DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
                     } else if (game.currentPlayer == NULL && (currentGameState == PLAYING || currentGameState == GAME_OVER) && game.numPlayers > 0) {
                         TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
                     }
