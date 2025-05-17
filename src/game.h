@@ -33,6 +33,7 @@ typedef struct {
     double timerPauseEndTime;
     int turnDirection;
     bool skipToNextPlayer;
+    WordList* gameWordList;
 
     Player* currentPlayer; 
     Player* firstPlayer;   

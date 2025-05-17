@@ -32,8 +32,14 @@ void applyPowerUp(GameManager *game, Player *player, int powerUp){
         
     } else if (powerUp == 3) {
         //pular a vez
+        forceTurnEnd(game, player);
+        game -> currentPlayer -> powerUP = 0;
+
     } else if (powerUp == 4) {
         //trocar de silaba
+        changeSilaba(game, player);
+        game -> currentPlayer -> powerUP = 0;
+
     }
 }
 
@@ -66,6 +72,22 @@ void forceTurnEnd(GameManager *game, Player *player) {
         game->skipToNextPlayer = true;
         TraceLog(LOG_INFO, TextFormat("PowerUp PULAR ativado por %s: O proximo jogador sera pulado.", player->name));
         // A logica de pular DE FATO o jogador acontecera dentro de PassTurn.
+    }
+}
+
+//Função pra trocar a silaba do jogador:
+void changeSilaba(GameManager *game, Player *player){
+    if (game != NULL && game-> gameWordList != NULL) {
+        // Chama a funcao para obter uma NOVA silaba aleatoria
+        const char* newSyllable = SelectRandomSyllable(game-> gameWordList);
+
+        // Atualiza o ponteiro da silaba atual no GameManager
+        game->currentSyllable = newSyllable;
+
+        TraceLog(LOG_INFO, TextFormat("PowerUp SILABA ativado por %s: Silaba trocada para '%s'.", (player != NULL ? player->name : "Desconhecido"), game->currentSyllable));
+
+    } else {
+        TraceLog(LOG_WARNING, "PowerUp SILABA: Nao foi possivel trocar a silaba (GameManager ou gameWordList nulo?).");
     }
 }
 static void RemovePlayerFromList(GameManager* game, Player* playerToRemove) {
@@ -169,6 +191,8 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
     game->initialBombTime = initialBombTime;
     game->bombTimer = initialBombTime;
     game->currentSyllable = SelectRandomSyllable(wordList);
+
+    game->gameWordList = wordList;
 
     //Novas inicializações pras variaveis modificadoras dos powerUPS!!!
     game -> isTimerPaused = false;
@@ -402,6 +426,15 @@ GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInp
         turnEnded = true;
     }
 
+    // --- ADICIONADO: Verificar se o PowerUp "Pular (encerrar turno)" forcou o fim ---
+    // Checamos game->skipToNextPlayer (que agora significa forceTurnEnd)
+    if (!turnEnded && game->skipToNextPlayer) { // Se o turno ainda nao terminou E a flag "skipToNextPlayer" esta ativa
+       TraceLog(LOG_INFO, TextFormat("Turno forcado a terminar (via skipToNextPlayer) para %s.", game->currentPlayer->name));
+       turnEnded = true; // Forca o fim do turno
+       game->skipToNextPlayer = false; // Reseta a flag depois de usá-la
+    }
+    // --- FIM DA ADICAO ---
+
     if (turnEnded) {
         // Pass the playerInput and playerInputEditMode pointers to PassTurn
         return PassTurn(game, wordList, playerInput, playerInputEditMode);
@@ -409,6 +442,28 @@ GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInp
          // If the turn didn't end, handle player input while in edit mode
          if (*playerInputEditMode) {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
+            if (IsKeyPressed(KEY_ONE)) {
+                // Checar se o jogador atual possui um PowerUp (powerUP > 0)
+                // player->powerUP foi adicionado na struct Player em player.h
+                if (game-> currentPlayer != NULL && game->currentPlayer->powerUP > 0) {
+                    TraceLog(LOG_INFO, TextFormat("%s ativou o PowerUp %d!", game->currentPlayer->name, game->currentPlayer->powerUP));
+
+                    int usedPowerUpType = game->currentPlayer->powerUP; // Guarda o tipo antes de resetar
+                    game->currentPlayer->powerUP = 0; // Consome o PowerUp
+                    // Aplica o efeito do PowerUp usado
+                    // applyPowerUp espera GameManager* e Player*
+                    applyPowerUp(game, game->currentPlayer, usedPowerUpType);
+                    // Se o PowerUp 3 foi usado, applyPowerUp (via forceTurnEnd)
+                    // setou game->skipToNextPlayer = true. A logica acima vai capturar isso.
+                    // Nenhuma outra acao aqui apos chamar applyPowerUp para PowerUps 1, 2, 4.
+
+                } else {
+                    // Opcional: feedback para o jogador que nao tem PowerUp
+                    // TraceLog(LOG_INFO, TextFormat("%s tentou usar PowerUp, mas nao tem nenhum.", game->currentPlayer->name));
+                }
+            }
+
             int key = GetCharPressed();
 
             while (key > 0) {
