@@ -15,6 +15,8 @@
 #include "player.h"
 #include "leaderboard.h" 
 
+#define MAX_INPUT_CHARS     9
+
 Vector2 playerPositionsCenter;
 float playerPositionsRadius = 250.0f;
 
@@ -29,6 +31,11 @@ int main(void)
     srand(time(NULL));
 
     InitWindow(initialScreenWidth, initialScreenHeight, "BombParty");
+    char name[MAX_INPUT_CHARS + 1] = "\0";
+    int letterCount = 0;
+
+    Rectangle textBox = { initialScreenHeight/2.0f - 100, 180, 225, 50 };
+    bool mouseOnText = false;
 
     GuiLoadStyleDefault();
 
@@ -148,6 +155,42 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                     if (selectedMode == 1) {
                         initialBombTime_value = 10.0f;
+                        if (CheckCollisionPointRec(GetMousePosition(), textBox)) mouseOnText = true;
+                        else mouseOnText = false;
+
+                        if (mouseOnText)
+                        {
+                            // Set the window's cursor to the I-Beam
+                            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
+                            // Get char pressed (unicode character) on the queue
+                            int key = GetCharPressed();
+
+                            // Check if more characters have been pressed on the same frame
+                            while (key > 0)
+                            {
+                                // NOTE: Only allow keys in range [32..125]
+                                if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
+                                {
+                                    name[letterCount] = (char)key;
+                                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
+                                    letterCount++;
+                                }
+
+                                key = GetCharPressed();  // Check next character in the queue
+                            }
+
+                            if (IsKeyPressed(KEY_BACKSPACE))
+                            {
+                                letterCount--;
+                                if (letterCount < 0) letterCount = 0;
+                                name[letterCount] = '\0';
+                            }
+                        }
+                        else SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+                        if (mouseOnText) framesCounter++;
+                        else framesCounter = 0;
                     } else {
                         initialBombTime_value = 15.0f;
                     }
@@ -172,6 +215,20 @@ int main(void)
 
             case PLAYING:
             {
+                framesCounter++;
+
+                if (framesCounter >= (60/framesSpeed)){
+                    framesCounter = 0;
+                    currentFrame++;
+                    
+                    if(currentFrame > 3) currentFrame = 0;
+
+                    // spritesheet 5 colunas:
+                    // frameRec.x = (float)(currentFrame % 5) * (float)wizardLittle.width/5;
+                    // spritesheet 4 linhas:
+                    frameRec.y = (float)(currentFrame / 5) * (float)wizardLittle.height/4;
+                }
+
                 if (game.currentPlayer == NULL || game.numPlayers <= 0) {
                     TraceLog(LOG_WARNING, "PLAYING state entered with no current player or zero players. Transitioning to GAME_OVER.");
                     currentGameState = GAME_OVER;
@@ -299,6 +356,47 @@ int main(void)
                         DrawText(modes[i], GetScreenWidth()/2 - textWidth/2, startY + i * 40, 25, color);
                     }
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, RAYWHITE);
+
+                    // --- Adicionar o input de texto aqui ---
+
+                    // Posição e tamanho da caixa de texto (ajuste conforme necessário)
+                    Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 }; // Posicionado abaixo das opções de modo
+
+                    DrawText("Digite seu nome:", GetScreenWidth()/2 - MeasureText("Digite seu nome:", 20)/2, nameInputBox.y - 30, 20, RAYWHITE);
+
+                    // Desenha a caixa de texto e a borda
+                    DrawRectangleRec(nameInputBox, LIGHTGRAY);
+                    if (mouseOnText) {
+                        DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, RED);
+                    } else {
+                        DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, DARKGRAY);
+                    }
+
+                    // Desenha o texto digitado pelo jogador
+                    // Use textFont para consistência com o resto do jogo
+                    DrawTextEx(textFont, name, (Vector2){nameInputBox.x + 5, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
+
+
+                    // Desenha o contador de caracteres (opcional)
+                    DrawText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), GetScreenWidth()/2 - MeasureText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, DARKGRAY);
+
+
+                    // Desenha o cursor piscando se o mouse estiver sobre a caixa de texto e não atingiu o limite de caracteres
+                    if (mouseOnText && letterCount < MAX_INPUT_CHARS)
+                    {
+                         if (((framesCounter/20)%2) == 0) {
+                             Vector2 cursor_pos = MeasureTextEx(textFont, name, textFont.baseSize, 0);
+                             DrawTextEx(textFont, "_", (Vector2){nameInputBox.x + 5 + cursor_pos.x, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
+                         }
+                    }
+                    // Mensagem para o usuário se atingiu o limite (opcional)
+                    else if (letterCount >= MAX_INPUT_CHARS) {
+                         DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
+                    }
+
+
+                    // --- Fim do input de texto ---
+
                 } break;
 
                 case PLAYING:
@@ -363,6 +461,9 @@ int main(void)
                     } else {
                         DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
+
+                    Vector2 wizardLittlePosition = { 350.0f, 280.0f }; 
+                    DrawTextureRec(wizardLittle, frameRec, wizardLittlePosition, WHITE); 
 
                 } break;
 
