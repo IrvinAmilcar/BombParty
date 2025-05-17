@@ -13,7 +13,7 @@
 #include "wordlist.h"
 #include "game.h"
 #include "player.h"
-#include "leaderboard.h" // Include the new leaderboard header
+#include "leaderboard.h" 
 
 Vector2 playerPositionsCenter;
 float playerPositionsRadius = 250.0f;
@@ -48,6 +48,7 @@ int main(void)
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
     Texture2D backgroundTexture = {0};
+    Texture2D wizardLittle = {0};
 
     bombTexture = LoadTexture("resources/textures/bomb.png");
     if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
@@ -57,8 +58,15 @@ int main(void)
     if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
     backgroundTexture = LoadTexture("resources/textures/download.jpeg");
     if (backgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load background texture.");
-    
+    wizardLittle = LoadTexture("resources/textures/wizardLittle.png");
+    if (wizardLittle.id == 0) TraceLog(LOG_WARNING, "Failed to load wizardLittle texture.");
 
+    Vector2 wizardLittlePosition = { 350.0f, 280.0f };
+    Rectangle frameRec = { 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4};
+    int currentFrame = 0;
+
+    int framesCounter = 0;
+    int framesSpeed = 8;
 
     WordList wordList = { NULL, NULL, 0 };
     wordList = LoadWordList("resources/data/palavras.txt");
@@ -82,9 +90,7 @@ int main(void)
 
     float initialBombTime_value = 15.0f;
 
-    // --- Load leaderboard on startup using the function from leaderboard.c ---
     LoadLeaderboard();
-    // --- End Load leaderboard on startup ---
 
     SetTargetFPS(60);
 
