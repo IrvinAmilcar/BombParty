@@ -65,7 +65,10 @@ end
 function build_externals()
      print("calling externals")
      check_raylib()
-     check_curl()
+     -- Chamar check_curl() apenas para Windows, se necessário
+     filter "system:windows"
+        check_curl()
+     filter{}
 end
 
 function platform_defines()
@@ -201,8 +204,6 @@ if (downloadRaylib) then
         flags { "ShadowedVariables"}
         platform_defines()
 
-        libdirs {"../include/curl/lib"}
-
         filter "action:vs*"
             defines{"_WINSOCK_DEPRECATED_NO_WARNINGS", "_CRT_SECURE_NO_WARNINGS"}
             dependson {"raylib"}
@@ -217,6 +218,7 @@ if (downloadRaylib) then
 
         filter "system:linux"
             links {"pthread", "m", "dl", "rt", "X11"}
+            links {"curl", "nghttp2"}
 
         filter "system:macosx"
             links {"OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreAudio.framework", "CoreVideo.framework", "AudioToolbox.framework"}
