@@ -8,10 +8,12 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "wordlist.h"
 #include "game.h"
 #include "player.h"
+#include "leaderboard.h" // Include the new leaderboard header
 
 Vector2 playerPositionsCenter;
 float playerPositionsRadius = 250.0f;
@@ -45,6 +47,7 @@ int main(void)
     Texture2D bombTexture = { 0 };
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
+    Texture2D backgroundTexture = {0};
 
     bombTexture = LoadTexture("resources/textures/bomb.png");
     if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
@@ -52,6 +55,9 @@ int main(void)
     if (sparkTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load spark texture.");
     arrowTexture = LoadTexture("resources/textures/arrow.png");
     if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
+    backgroundTexture = LoadTexture("resources/textures/download.jpeg");
+    if (backgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load background texture.");
+    
 
 
     WordList wordList = { NULL, NULL, 0 };
@@ -60,7 +66,7 @@ int main(void)
 
 
     char playerInput[MAX_PLAYER_INPUT_CHARS + 1] = { 0 };
-    bool playerInputEditMode = false; // Initialize as false, set to true when game starts
+    bool playerInputEditMode = false;
 
     GameState currentGameState = MENU;
 
@@ -75,6 +81,10 @@ int main(void)
     int numPlayersSelectedInMenu = 0;
 
     float initialBombTime_value = 15.0f;
+
+    // --- Load leaderboard on startup using the function from leaderboard.c ---
+    LoadLeaderboard();
+    // --- End Load leaderboard on startup ---
 
     SetTargetFPS(60);
 
@@ -100,7 +110,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                     switch (menuOption) {
                         case 0: currentGameState = SELECT_PLAYERS; break;
-                        case 1: currentGameState = LEADERBOARD; break;
+                        case 1: currentGameState = LEADERBOARD; break; // Transition to LEADERBOARD state
                         case 2: currentGameState = CREDITS; break;
                     }
                 }
@@ -144,11 +154,8 @@ int main(void)
                         TraceLog(LOG_ERROR, "Falha ao iniciar o jogo apos selecao de modo.");
                         currentGameState = MENU;
                     } else {
-                        // --- New: Set edit mode to true and clear input on game start ---
                         playerInputEditMode = true;
                         playerInput[0] = '\0';
-                        TraceLog(LOG_INFO, "Entering PLAYING state: playerInputEditMode set to true.");
-                        // --- End New ---
                         GuiSetState(STATE_NORMAL);
                         currentGameState = PLAYING;
                     }
@@ -165,7 +172,6 @@ int main(void)
                      TraceLog(LOG_WARNING, "PLAYING state entered with no current player or zero players. Transitioning to GAME_OVER.");
                      currentGameState = GAME_OVER;
                  } else {
-                    // Pass playerInput and playerInputEditMode to UpdatePlayingState
                     currentGameState = UpdatePlayingState(&game, deltaTime, playerInput, &playerInputEditMode, &wordList);
                  }
 
@@ -173,6 +179,16 @@ int main(void)
 
             case GAME_OVER:
             {
+                 // --- Add winner to leaderboard using the function from leaderboard.c ---
+                 if (game.numPlayers == 1 && game.firstPlayer != NULL) {
+                     Player* winner = game.firstPlayer;
+                     AddToLeaderboard(winner->name, winner->score); // Call AddToLeaderboard
+                     TraceLog(LOG_INFO, TextFormat("Vencedor %s com score %d processado para leaderboard.", winner->name, winner->score));
+                 } else if (game.numPlayers == 0) {
+                      TraceLog(LOG_INFO, "Nenhum vencedor para adicionar ao leaderboard.");
+                 }
+                 // --- End Add winner to leaderboard ---
+
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 {
                     ShutdownGame(&game);
@@ -182,6 +198,7 @@ int main(void)
 
             case LEADERBOARD:
             {
+                 // No update logic needed here, just handle input for going back
                 if (IsKeyPressed(KEY_BACKSPACE)) {
                     currentGameState = MENU;
                 }
@@ -283,37 +300,36 @@ int main(void)
 
                 case PLAYING:
                 {
+
+                    DrawTexture(backgroundTexture, 0, 0, WHITE);
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
-                    // GuiTextBox is now only for drawing, input handling is in UpdatePlayingState
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
 
-                    // Draw the arrow
                     if (arrowTexture.id != 0 && game.currentPlayer != NULL) {
-                        Vector2 arrowPivot = playerPositionsCenter;
-                        Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
+                         Vector2 arrowPivot = playerPositionsCenter;
+                         Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
 
-                        Vector2 direction = {
+                         Vector2 direction = {
                             targetPlayerPos.x - arrowPivot.x,
                             targetPlayerPos.y - arrowPivot.y
-                        };
+                         };
 
-                        float angle_radians = atan2f(direction.y, direction.x);
-                        float angle_degrees = angle_radians * RAD2DEG;
-                        float arrowDrawingRotation = angle_degrees + 0.0f;
+                         float angle_radians = atan2f(direction.y, direction.x);
+                         float angle_degrees = angle_radians * RAD2DEG;
+                         float arrowDrawingRotation = angle_degrees + 0.0f;
 
-                        float arrowScale = 0.4f;
+                         float arrowScale = 0.4f;
 
-                        Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
-                        Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
-                        Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
+                         Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
+                         Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
+                         Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
 
-                        DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
-                    } else if (game.currentPlayer == NULL && game.numPlayers > 0) {
-                        TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
+                         DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
+                    } else if (game.currentPlayer == NULL && (currentGameState == PLAYING || currentGameState == GAME_OVER) && game.numPlayers > 0) {
+                         TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0.");
                     }
 
 
-                    // Draw bomb and timer
                     float bombScale = 0.3f;
                     float bombRotation = 0.0f;
 
@@ -329,8 +345,9 @@ int main(void)
                         bombPosition.y + bombTexture.height * bombScale * 0.5f
                     };
 
+
                     if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
-                    if (sparkTexture.id != 0 && bombTexture.id != 0 && game.bombTimer <= 5.0f && fmod((float)GetTime(), 0.5f) < 0.25f) {
+                     if (sparkTexture.id != 0 && bombTexture.id != 0 && game.bombTimer <= 5.0f && fmod((float)GetTime(), 0.5f) < 0.25f) {
                         DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
                     }
 
@@ -356,7 +373,7 @@ int main(void)
                     if (game.numPlayers == 1 && game.firstPlayer != NULL) {
                          Player* winner = game.firstPlayer;
                          if (winner != NULL) {
-                             snprintf(winnerText, sizeof(winnerText), "%s venceu!", winner->name);
+                             snprintf(winnerText, sizeof(winnerText), "%s venceu! Score: %d", winner->name, winner->score);
                          } else {
                              strncpy(winnerText, "Erro ao determinar vencedor.", sizeof(winnerText) -1);
                              winnerText[sizeof(winnerText)-1] = '\0';
@@ -383,9 +400,11 @@ int main(void)
 
                 case LEADERBOARD:
                 {
-                    ClearBackground(LIGHTGRAY);
-                    DrawText("LEADERBOARD", GetScreenWidth()/2 - MeasureText("LEADERBOARD", 40)/2, GetScreenHeight()/3, 40, BLACK);
-                    DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
+                    // --- Draw Leaderboard using the function from leaderboard.c ---
+                    DrawLeaderboard(textFont, currentActualWidth, currentActualHeight);
+                    // --- End Draw Leaderboard ---
+
+                    // The back key handling is already in the update section for LEADERBOARD state
                 } break;
 
                 case CREDITS:
@@ -403,6 +422,7 @@ int main(void)
         EndDrawing();
     }
 
+    // Ensure game resources are shut down on window close
     ShutdownGame(&game);
 
     UnloadWordList(&wordList);
