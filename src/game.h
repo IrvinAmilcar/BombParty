@@ -53,12 +53,12 @@ void ShutdownGame(GameManager* game);
 int generatePowerUp();
 
 //Função pra aplicar os powerUPS:
-void applyPowerUp(Player *player, int powerUp);
+void applyPowerUp(GameManager *game, Player *player, int powerUp);
 
 //Funções modificadoras do jogo (Os powerUPS em sikkkk):
 void pauseBomboTimer(GameManager *game, Player *player);   //Função pra pausar o tempo da bomba por 10 segundos!
 void inverterOrdemDoJogo(GameManager *game, Player *player); //Função pra inverter a ordem do jogo
-void skipPlayer(GameManager *game, Player *player); //Função pra pular o jogador
+void forceTurnEnd(GameManager *game, Player *player); //Função pra pular o jogador
 void changeSilaba(GameManager *game, Player *player); //Troca a silaba do player atual!
 
 #endif

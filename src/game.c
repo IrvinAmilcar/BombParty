@@ -19,11 +19,17 @@ int selectedMode = 0;
 
 //Função pra aplicar o powerUP: 
 //Dentro dessa função precisamos chamar as funções que aplicarão verdadeiramente os efeitos!
-void applyPowerUp(Player *player, int powerUp){
+void applyPowerUp(GameManager *game, Player *player, int powerUp){
     if (powerUp == 1) {
         //Pausar a bomba por 10 segundos
+        pauseBomboTimer(game, player);
+        game -> currentPlayer -> powerUP = 0; //Reseta o uso do powerUP após o uso!
+        
     } else if (powerUp == 2) {
         //Inverter a ordem dos jogadores
+        inverterOrdemDoJogo(game, player);
+        game -> currentPlayer -> powerUP = 0;
+        
     } else if (powerUp == 3) {
         //pular a vez
     } else if (powerUp == 4) {
@@ -31,6 +37,37 @@ void applyPowerUp(Player *player, int powerUp){
     }
 }
 
+//Funçõs de powerUps:
+//Pausar o tempo por 10 segundos (Adicionar mais 10 segundos ao relogio!)
+void pauseBomboTimer(GameManager *game, Player *player) {
+    if (game != NULL) {
+        game->isTimerPaused = true;
+        // Calcula o tempo EXATO do jogo (usando GetTime()) quando a pausa deve terminar
+        game->timerPauseEndTime = GetTime() + 10.0; // GetTime() retorna double, por isso timerPauseEndTime deve ser double
+
+        TraceLog(LOG_INFO, TextFormat("PowerUp PAUSE ativado por %s: Timer pausado ate %f", player->name, game->timerPauseEndTime));
+    }
+}
+
+//Função pra inverter a ordem dos jogadores:
+void inverterOrdemDoJogo(GameManager *game, Player *player){
+    if (game != NULL) {
+        // Alterna entre 0 e 1
+        game->turnDirection = 1 - game->turnDirection;
+
+        TraceLog(LOG_INFO, TextFormat("PowerUp INVERTER ativado por %s: Ordem do jogo %s.", player->name, (game->turnDirection == 0) ? "NORMAL (direita)" : "INVERTIDA (esquerda)"));
+
+    }
+}
+
+//Função pra pular o jogador da vez
+void forceTurnEnd(GameManager *game, Player *player) {
+    if (game != NULL) {
+        game->skipToNextPlayer = true;
+        TraceLog(LOG_INFO, TextFormat("PowerUp PULAR ativado por %s: O proximo jogador sera pulado.", player->name));
+        // A logica de pular DE FATO o jogador acontecera dentro de PassTurn.
+    }
+}
 static void RemovePlayerFromList(GameManager* game, Player* playerToRemove) {
     if (game == NULL || playerToRemove == NULL || game->numPlayers <= 0) {
         if (game != NULL && game->numPlayers <= 1) {
@@ -137,7 +174,7 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
     game -> isTimerPaused = false;
     game -> skipToNextPlayer = false;
     game -> turnDirection = 0; //Se for zero, a direção é normal (Pra direita), se for 1, pra esquerda!
-    game -> timerPauseEndTime = 10.0f;
+    game -> timerPauseEndTime = 0.0f;
 
     ResetUsedWordList();
 
@@ -208,9 +245,9 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
         return false; // Should not be reached
 
     } else {
-
-        char *aiFile;
-        strcpy(aiFile, lerArquivoParaString("resources/data/palavras_da_ia.txt"));
+    
+        char *aiFile = lerArquivoParaString("resources/data/palavras_da_ia.txt");
+        
 
         TraceLog(LOG_INFO, TextFormat("Processing submitted input: '%s'", playerInput));
 
@@ -247,6 +284,19 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
 
 
 static bool HandleBombTimer(GameManager* game, float deltaTime) {
+    // --- Adicionado: Checar se o timer está pausado ---
+    if (game->isTimerPaused) {
+        // Se estiver pausado, checar se o tempo de pausa acabou
+        if (GetTime() >= game->timerPauseEndTime) {
+            // Tempo de pausa acabou, despausa o timer
+            game->isTimerPaused = false;
+            TraceLog(LOG_INFO, "Pausa do timer terminou. Timer despausado.");
+        }
+        // Se estiver pausado E o tempo não acabou, simplesmente não faz NADA (não decrementa o timer)
+        return false; // O turno não termina por causa do timer enquanto estiver pausado
+    }
+
+    // Se o timer NÃO ESTÁ pausado, decrementa normalmente
     game->bombTimer -= deltaTime;
 
     if (game->bombTimer <= 0.0f) {
@@ -254,9 +304,10 @@ static bool HandleBombTimer(GameManager* game, float deltaTime) {
         TraceLog(LOG_INFO, TextFormat("Tempo esgotado para %s!", game->currentPlayer->name));
         game->currentPlayer->lives--;
         TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
-        return true; // Turn ends
+        return true; // Turno termina por tempo esgotado
     }
-    return false;
+
+    return false; // Turno não termina pelo timer ainda
 }
 
 // Modified to accept playerInput and playerInputEditMode pointers
@@ -272,8 +323,16 @@ static GameState PassTurn(GameManager* game, WordList* wordList, char* playerInp
         TraceLog(LOG_INFO, TextFormat("PassTurn: Jogador %s (original index %d) foi eliminado.", game->currentPlayer->name, game->currentPlayer->originalIndex));
         if (game->numPlayers > 1) {
             Player* playerToRemove = game->currentPlayer;
-            game->currentPlayer = game->currentPlayer->next; // Move to the next player BEFORE removal
-            RemovePlayerFromList(game, playerToRemove);
+
+            if (game->turnDirection == 0) { // Direcao Normal (0): Vai para o 'next'
+                game->currentPlayer = game->currentPlayer->next;
+                TraceLog(LOG_INFO, "PassTurn: Movendo para o proximo na direcao NORMAL antes de remover.");
+            } else { // Direcao Invertida (1): Vai para o 'prev'
+                game->currentPlayer = game->currentPlayer->prev;
+                TraceLog(LOG_INFO, "PassTurn: Movendo para o proximo na direcao INVERTIDA antes de remover.");
+            }
+
+            RemovePlayerFromList(game, playerToRemove); // Remove o jogador ELIMINADO da lista circular
             currentPlayerWasEliminated = true;
         } else {
             TraceLog(LOG_INFO, "PassTurn: O ultimo jogador vivo foi eliminado.");
@@ -284,7 +343,13 @@ static GameState PassTurn(GameManager* game, WordList* wordList, char* playerInp
         }
     } else {
         // If the current player was NOT eliminated, move to the next player
-        game->currentPlayer = game->currentPlayer->next;
+        if (game->turnDirection == 0) { // Direcao Normal (0): Vai para o 'next'
+            game->currentPlayer = game->currentPlayer->next;
+            TraceLog(LOG_INFO, "PassTurn: Movendo para o proximo na direcao NORMAL.");
+        } else { // Direcao Invertida (1): Vai para o 'prev'
+            game->currentPlayer = game->currentPlayer->prev;
+            TraceLog(LOG_INFO, "PassTurn: Movendo para o proximo na direcao INVERTIDA.");
+        }
     }
 
     if (game->numPlayers <= 1) {
@@ -315,7 +380,7 @@ static GameState PassTurn(GameManager* game, WordList* wordList, char* playerInp
 
 // Modified to pass playerInput and playerInputEditMode pointers to PassTurn
 GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInput, bool* playerInputEditMode, WordList* wordList) {
-     if (game == NULL || game->currentPlayer == NULL || game->numPlayers <= 0) {
+    if (game == NULL || game->currentPlayer == NULL || game->numPlayers <= 0) {
         TraceLog(LOG_ERROR, "UpdatePlayingState: GameManager, currentPlayer nulo ou numPlayers <= 0. Forcando fim de jogo.");
         return GAME_OVER;
     }

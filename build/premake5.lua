@@ -38,9 +38,34 @@ function check_raylib()
     os.chdir("../")
 end
 
+function check_curl()
+    local curl_source_dll_path = path.join("..", "include", "curl", "bin", "libcurl-x64.dll")
+    local curl_dest_dll_path = path.join("..", "bin", "Debug", "libcurl-x64.dll")
+    local dest_dir = path.getdirectory(curl_dest_dll_path)
+
+    if (os.isfile(curl_source_dll_path)) then
+        if (not os.isdir(dest_dir)) then
+             print("Destination directory not found. Creating: " .. dest_dir)
+             os.mkdir(dest_dir)
+        end
+
+        if (os.isfile(curl_dest_dll_path) == false) then
+            print("Curl DLL not found in build output (Debug). Copying from source...")
+            os.copyfile(curl_source_dll_path, curl_dest_dll_path)
+            print("Curl DLL copied to: " .. curl_dest_dll_path)
+        else
+            print("Curl DLL already in build output (Debug): " .. curl_dest_dll_path)
+        end
+    else
+        print("Error: Curl source DLL not found at: " .. curl_source_dll_path)
+        print("Please ensure you have placed the curl binaries in the include/curl/ directory relative to your project root.")
+    end
+end
+
 function build_externals()
      print("calling externals")
      check_raylib()
+     check_curl()
 end
 
 function platform_defines()
