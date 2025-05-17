@@ -116,7 +116,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                     switch (menuOption) {
                         case 0: currentGameState = SELECT_PLAYERS; break;
-                        case 1: currentGameState = LEADERBOARD; break; // Transition to LEADERBOARD state
+                        case 1: currentGameState = LEADERBOARD; break;
                         case 2: currentGameState = CREDITS; break;
                     }
                 }
@@ -352,7 +352,7 @@ int main(void)
 
 
                     if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
-                     if (sparkTexture.id != 0 && bombTexture.id != 0 && game.bombTimer <= 5.0f && fmod((float)GetTime(), 0.5f) < 0.25f) {
+                    if (sparkTexture.id != 0 && bombTexture.id != 0 && game.bombTimer <= 5.0f && fmod((float)GetTime(), 0.5f) < 0.25f) {
                         DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
                     }
 
@@ -440,6 +440,7 @@ int main(void)
     if (bombTexture.id != 0) UnloadTexture(bombTexture);
     if (sparkTexture.id != 0) UnloadTexture(sparkTexture);
     if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
+    if (wizardLittle.id != 0) UnloadTexture(wizardLittle);
 
     CloseWindow();
 

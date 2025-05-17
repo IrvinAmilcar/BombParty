@@ -1,6 +1,6 @@
 #ifndef GEMINI_H
 #define GEMINI_H
 
-void generate_word_list(const char *theme, const char *db_file, const char *output_file);
+void generate_word_list(const char *theme, const char *output_file);
 
 #endif

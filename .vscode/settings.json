@@ -9,6 +9,7 @@
 		"**/*.exe": true,
 	},
 	"files.associations": {
-		"CJSON.C": "cpp"
+		"CJSON.C": "cpp",
+		"curl.h": "c"
 	}
 }
