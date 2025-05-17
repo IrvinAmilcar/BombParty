@@ -36,7 +36,7 @@ typedef struct {
 
 } GameManager;
 
-int selectedMode = 0;
+extern int selectedMode;
 
 GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInput, bool* playerInputEditMode, WordList* wordList);
 

@@ -7,12 +7,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h> //Novo include pra função de gerar numeros aleatoros!
+#include "armazenarTxt.h"
 
 int generatePowerUp() {
     srand((unsigned int)time(NULL));
     // Gera um número aleatório entre 1 e 4
     return (rand() % 4) + 1;
 }
+
+int selectedMode = 0;
 
 //Função pra aplicar o powerUP: 
 //Dentro dessa função precisamos chamar as funções que aplicarão verdadeiramente os efeitos!
@@ -200,7 +203,8 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
 
     } else {
 
-        FILE *aiFile = fopen("resources/data/palavras_da_ia.txt", "r");
+        char *aiFile;
+        strcpy(aiFile, lerArquivoParaString("resources/data/palavras_da_ia.txt"));
 
         TraceLog(LOG_INFO, TextFormat("Processing submitted input: '%s'", playerInput));
 
@@ -217,17 +221,17 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
                 TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida pela IA!", playerInput));
                 game ->  currentPlayer -> powerUP = generatePowerUp(); //Player ativo recebe um powerUP (1 - 4)!
             }
-            fclose(aiFile);
+            //fclose(aiFile);
             return true; // Turn ends
         } else {
             TraceLog(LOG_INFO, TextFormat("Palavra '%s' invalida!", playerInput));
             game->currentPlayer->lives--;
             TraceLog(LOG_INFO, TextFormat("%s perdeu uma vida. Vidas restantes: %d", game->currentPlayer->name, game->currentPlayer->lives));
             playerInput[0] = '\0'; // Clear input buffer
-            fclose(aiFile);
+            //fclose(aiFile);
             return true; // Turn ends
         }
-        fclose(aiFile);
+        //fclose(aiFile);
         return false; 
 
     }
