@@ -34,9 +34,9 @@ void applyPowerUp(Player *player, int powerUp){
 static void RemovePlayerFromList(GameManager* game, Player* playerToRemove) {
     if (game == NULL || playerToRemove == NULL || game->numPlayers <= 0) {
         if (game != NULL && game->numPlayers <= 1) {
-             TraceLog(LOG_INFO, "RemovePlayerFromList: Tentativa de remover o ultimo ou penultimo jogador. Fim de jogo se o ultimo.");
+            TraceLog(LOG_INFO, "RemovePlayerFromList: Tentativa de remover o ultimo ou penultimo jogador. Fim de jogo se o ultimo.");
         } else {
-             TraceLog(LOG_WARNING, "RemovePlayerFromList: Chamada invalida (game, playerToRemove nulo ou numPlayers <= 0).");
+            TraceLog(LOG_WARNING, "RemovePlayerFromList: Chamada invalida (game, playerToRemove nulo ou numPlayers <= 0).");
         }
         return;
     }
@@ -53,29 +53,29 @@ static void RemovePlayerFromList(GameManager* game, Player* playerToRemove) {
         }
 
          if (game->currentPlayer == playerToRemove) {
-             TraceLog(LOG_INFO, "RemovePlayerFromList: Jogador atual removido. PassTurn cuidara do proximo.");
-         }
+            TraceLog(LOG_INFO, "RemovePlayerFromList: Jogador atual removido. PassTurn cuidara do proximo.");
+        }
 
         game->numPlayers--;
         TraceLog(LOG_INFO, TextFormat("Jogador %s removido. Jogadores restantes: %d.", playerToRemove->name, game->numPlayers));
 
         if (game->numPlayers == 1) {
-             // When only one player remains, firstPlayer should point to the winner.
-             // Since currentPlayer was advanced BEFORE removal in PassTurn if eliminated,
-             // game->currentPlayer *should* be the winner.
-             game->firstPlayer = game->currentPlayer;
-             TraceLog(LOG_INFO, TextFormat("RemovePlayerFromList: Apos remocao, apenas 1 jogador restante: %s.", game->firstPlayer->name));
+            // When only one player remains, firstPlayer should point to the winner.
+            // Since currentPlayer was advanced BEFORE removal in PassTurn if eliminated,
+            // game->currentPlayer *should* be the winner.
+            game->firstPlayer = game->currentPlayer;
+            TraceLog(LOG_INFO, TextFormat("RemovePlayerFromList: Apos remocao, apenas 1 jogador restante: %s.", game->firstPlayer->name));
         } else if (game->numPlayers == 0) {
-             game->firstPlayer = NULL;
-             game->currentPlayer = NULL;
-             TraceLog(LOG_INFO, "RemovePlayerFromList: Apos remocao, 0 jogadores restantes.");
+            game->firstPlayer = NULL;
+            game->currentPlayer = NULL;
+            TraceLog(LOG_INFO, "RemovePlayerFromList: Apos remocao, 0 jogadores restantes.");
         }
 
     } else {
         TraceLog(LOG_WARNING, "RemovePlayerFromList: Tentativa de remover jogador quando ja ha 1 ou menos. Isso nao deveria acontecer aqui.");
-         game->numPlayers = 0;
-         game->firstPlayer = NULL;
-         game->currentPlayer = NULL;
+        game->numPlayers = 0;
+        game->firstPlayer = NULL;
+        game->currentPlayer = NULL;
     }
 }
 
@@ -92,7 +92,7 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
         return;
     }
 
-     TraceLog(LOG_INFO, TextFormat("InitializeGame: Iniciando com %d jogadores (lista circular).", numInitialPlayers));
+    TraceLog(LOG_INFO, TextFormat("InitializeGame: Iniciando com %d jogadores (lista circular).", numInitialPlayers));
 
     Player* playersArray = (Player*)malloc(numInitialPlayers * sizeof(Player));
     if (playersArray == NULL) {
@@ -116,8 +116,8 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
         playersArray[i].originalIndex = i;
         playersArray[i].score = 0;
 
-         playersArray[i].next = NULL;
-         playersArray[i].prev = NULL;
+        playersArray[i].next = NULL;
+        playersArray[i].prev = NULL;
     }
 
     for (int i = 0; i < numInitialPlayers; ++i) {
@@ -133,6 +133,12 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
     game->bombTimer = initialBombTime;
     game->currentSyllable = SelectRandomSyllable(wordList);
 
+    //Novas inicializações pras variaveis modificadoras dos powerUPS!!!
+    game -> isTimerPaused = false;
+    game -> skipToNextPlayer = false;
+    game -> turnDirection = 0; //Se for zero, a direção é normal (Pra direita), se for 1, pra esquerda!
+    game -> timerPauseEndTime = 10.0f;
+
     ResetUsedWordList();
 
     TraceLog(LOG_INFO, TextFormat("InitializeGame: Jogo configurado com lista circular. Silaba inicial: %s", game->currentSyllable));
@@ -147,12 +153,12 @@ void ShutdownGame(GameManager* game) {
     TraceLog(LOG_INFO, "ShutdownGame: Liberando memoria dos jogadores (lista circular)...");
 
     if (game->allocatedPlayersArrayBase != NULL) {
-         TraceLog(LOG_INFO, TextFormat("ShutdownGame: Liberando bloco alocado em %p", (void*)game->allocatedPlayersArrayBase));
-         free(game->allocatedPlayersArrayBase);
-         game->allocatedPlayersArrayBase = NULL;
-         TraceLog(LOG_INFO, "ShutdownGame: Bloco de jogadores liberado.");
+        TraceLog(LOG_INFO, TextFormat("ShutdownGame: Liberando bloco alocado em %p", (void*)game->allocatedPlayersArrayBase));
+        free(game->allocatedPlayersArrayBase);
+        game->allocatedPlayersArrayBase = NULL;
+        TraceLog(LOG_INFO, "ShutdownGame: Bloco de jogadores liberado.");
     } else {
-         TraceLog(LOG_INFO, "ShutdownGame: Ponteiro para base do array alocado nulo. Nada para liberar.");
+        TraceLog(LOG_INFO, "ShutdownGame: Ponteiro para base do array alocado nulo. Nada para liberar.");
     }
 
     game->currentPlayer = NULL;
@@ -255,31 +261,31 @@ static bool HandleBombTimer(GameManager* game, float deltaTime) {
 
 // Modified to accept playerInput and playerInputEditMode pointers
 static GameState PassTurn(GameManager* game, WordList* wordList, char* playerInput, bool* playerInputEditMode) {
-     if (game == NULL || game->currentPlayer == NULL || game->numPlayers <= 0) {
-         TraceLog(LOG_ERROR, "PassTurn: GameManager, currentPlayer nulo ou numPlayers <= 0. Forcando fim de jogo.");
-         return GAME_OVER;
-     }
+    if (game == NULL || game->currentPlayer == NULL || game->numPlayers <= 0) {
+        TraceLog(LOG_ERROR, "PassTurn: GameManager, currentPlayer nulo ou numPlayers <= 0. Forcando fim de jogo.");
+        return GAME_OVER;
+    }
 
-     bool currentPlayerWasEliminated = false;
+    bool currentPlayerWasEliminated = false;
 
-     if (game->currentPlayer->lives <= 0) {
-         TraceLog(LOG_INFO, TextFormat("PassTurn: Jogador %s (original index %d) foi eliminado.", game->currentPlayer->name, game->currentPlayer->originalIndex));
-         if (game->numPlayers > 1) {
+    if (game->currentPlayer->lives <= 0) {
+        TraceLog(LOG_INFO, TextFormat("PassTurn: Jogador %s (original index %d) foi eliminado.", game->currentPlayer->name, game->currentPlayer->originalIndex));
+        if (game->numPlayers > 1) {
             Player* playerToRemove = game->currentPlayer;
             game->currentPlayer = game->currentPlayer->next; // Move to the next player BEFORE removal
             RemovePlayerFromList(game, playerToRemove);
             currentPlayerWasEliminated = true;
-         } else {
-             TraceLog(LOG_INFO, "PassTurn: O ultimo jogador vivo foi eliminado.");
-             game->numPlayers = 0;
-             game->firstPlayer = NULL;
-             game->currentPlayer = NULL;
-              return GAME_OVER;
-         }
-     } else {
-          // If the current player was NOT eliminated, move to the next player
-         game->currentPlayer = game->currentPlayer->next;
-     }
+        } else {
+            TraceLog(LOG_INFO, "PassTurn: O ultimo jogador vivo foi eliminado.");
+            game->numPlayers = 0;
+            game->firstPlayer = NULL;
+            game->currentPlayer = NULL;
+            return GAME_OVER;
+        }
+    } else {
+        // If the current player was NOT eliminated, move to the next player
+        game->currentPlayer = game->currentPlayer->next;
+    }
 
     if (game->numPlayers <= 1) {
         TraceLog(LOG_INFO, TextFormat("PassTurn: Jogo terminou! Jogadores vivos restantes: %d", game->numPlayers));
@@ -293,7 +299,7 @@ static GameState PassTurn(GameManager* game, WordList* wordList, char* playerInp
     // --- New: Set input box to be edited automatically ---
     if (playerInputEditMode != NULL) {
         *playerInputEditMode = true;
-         TraceLog(LOG_INFO, "PassTurn: Setting playerInputEditMode to true for the next turn.");
+        TraceLog(LOG_INFO, "PassTurn: Setting playerInputEditMode to true for the next turn.");
     }
     if (playerInput != NULL) {
         playerInput[0] = '\0'; // Clear input buffer for the new turn
@@ -319,10 +325,10 @@ GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInp
     // Check for input *first* so a player can answer right as the timer hits zero
     // ProcessPlayerInput now just validates the current input buffer
     if (*playerInputEditMode && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER))) {
-         // If in edit mode and Enter is pressed, attempt to process the input
-         if (ProcessPlayerInput(game, playerInput, playerInputEditMode, wordList)) {
+        // If in edit mode and Enter is pressed, attempt to process the input
+        if (ProcessPlayerInput(game, playerInput, playerInputEditMode, wordList)) {
             turnEnded = true;
-         }
+        }
     }
 
 
@@ -337,27 +343,27 @@ GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInp
     } else {
          // If the turn didn't end, handle player input while in edit mode
          if (*playerInputEditMode) {
-             SetMouseCursor(MOUSE_CURSOR_IBEAM);
-             int key = GetCharPressed();
+            SetMouseCursor(MOUSE_CURSOR_IBEAM);
+            int key = GetCharPressed();
 
-             while (key > 0) {
+            while (key > 0) {
                  if ((key >= 32) && (key <= 126) && (strlen(playerInput) < MAX_PLAYER_INPUT_CHARS)) {
-                     int len = strlen(playerInput);
-                     playerInput[len] = (char)key;
-                     playerInput[len + 1] = '\0';
-                 }
-                 key = GetCharPressed();
-             }
+                    int len = strlen(playerInput);
+                    playerInput[len] = (char)key;
+                    playerInput[len + 1] = '\0';
+                }
+                key = GetCharPressed();
+            }
 
              if (IsKeyPressed(KEY_BACKSPACE)) {
-                 int len = strlen(playerInput);
-                 if (len > 0) {
-                     playerInput[len - 1] = '\0';
-                 }
-             }
-         } else {
-             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-         }
+                int len = strlen(playerInput);
+                if (len > 0) {
+                    playerInput[len - 1] = '\0';
+                }
+            }
+        } else {
+            SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+        }
     }
 
 
