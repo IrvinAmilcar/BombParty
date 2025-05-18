@@ -15,7 +15,7 @@
 #include "player.h"
 #include "leaderboard.h"
 
-#define MAX_INPUT_CHARS 9
+#define MAX_INPUT_CHARS 32
 
 Vector2 playerPositionsCenter;
 float playerPositionsRadius = 250.0f;
@@ -46,7 +46,7 @@ int main(void)
     char name[MAX_INPUT_CHARS + 1] = "\0";
     int letterCount = 0;
 
-    Rectangle textBox = { initialScreenHeight/2.0f - 100, 180, 225, 50 };
+    Rectangle textBox = {GetScreenWidth()/2.0f - 150, 120 + 2 * 40 + 50, 300, 50};
     bool mouseOnText = false;
 
     GuiLoadStyleDefault();
@@ -67,6 +67,7 @@ int main(void)
     Texture2D normalModeBackgroundTexture = {0};
     Texture2D menuBackgroundTexture = {0};
     Texture2D titleTexture = {0};
+    Texture2D backgroundTexture = {0};
 
     arrowTexture = LoadTexture("resources/textures/arrow.png");
     if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
@@ -187,12 +188,65 @@ int main(void)
                         playerInputEditMode = true;
                         playerInput[0] = '\0';
                         GuiSetState(STATE_NORMAL);
-                        currentGameState = PLAYING;
+                        if(selectedMode == 1)
+                        {
+                            currentGameState = TOPIC_INPUT;
+                        }
+                        else
+                        {
+                            currentGameState = PLAYING;
+                        }
+
                     }
                 }
 
                 if (IsKeyPressed(KEY_BACKSPACE)) {
                     currentGameState = SELECT_PLAYERS;
+                }
+            } break;
+
+            case TOPIC_INPUT:
+            {
+                if (CheckCollisionPointRec(GetMousePosition(), textBox)) mouseOnText = true;
+                else mouseOnText = false;
+
+                if (mouseOnText)
+                {
+                    // Set the window's cursor to the I-Beam
+                    SetMouseCursor(MOUSE_CURSOR_IBEAM);
+
+                    // Get char pressed (unicode character) on the queue
+                    int key = GetCharPressed();
+
+                    // Check if more characters have been pressed on the same frame
+                    while (key > 0)
+                    {
+                        // NOTE: Only allow keys in range [32..125]
+                        if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
+                        {
+                            name[letterCount] = (char)key;
+                            name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
+                            letterCount++;
+                        }
+
+                        key = GetCharPressed();  // Check next character in the queue
+                    }
+
+                    if (IsKeyPressed(KEY_BACKSPACE))
+                    {
+                        letterCount--;
+                        if (letterCount < 0) letterCount = 0;
+                        name[letterCount] = '\0';
+                    }
+                }
+                else SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+
+                if (mouseOnText) framesCounter++;
+                else framesCounter = 0;
+
+                if (IsKeyPressed(KEY_ENTER))
+                {
+                    currentGameState = PLAYING;
                 }
             } break;
 
@@ -385,9 +439,19 @@ int main(void)
 
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, RAYWHITE);
 
-                    Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 };
+                } break;
 
-                    DrawText("Digite seu nome:", GetScreenWidth()/2 - MeasureText("Digite seu nome:", 20)/2, nameInputBox.y - 30, 20, RAYWHITE);
+                case TOPIC_INPUT:
+                {
+                    ClearBackground(GREEN);
+
+                    int startY = 120;
+                    // --- Adicionar o input de texto aqui ---
+
+                    // Posição e tamanho da caixa de texto (ajuste conforme necessário)
+                    Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 }; // Posicionado abaixo das opções de modo
+
+                    DrawText("Digite o tema da partida:", GetScreenWidth()/2 - MeasureText("Digite o tema da partida:", 20)/2, nameInputBox.y - 30, 20, RAYWHITE);
 
                     DrawRectangleRec(nameInputBox, LIGHTGRAY);
                      if (mouseOnText) {
@@ -410,10 +474,15 @@ int main(void)
                     else if (letterCount >= MAX_INPUT_CHARS) {
                          DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
                     }
-                } break;
+
+                    // --- Fim do input de texto ---
+                }break;
 
                 case PLAYING:
                 {
+                    ClearBackground(GREEN);
+
+                    DrawTexture(backgroundTexture, 0, 0, WHITE);
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
 
