@@ -1,17 +1,17 @@
 newoption
 {
-	trigger = "graphics",
-	value = "OPENGL_VERSION",
-	description = "version of OpenGL to build raylib against",
-	allowed = {
-		{ "opengl11", "OpenGL 1.1"},
-		{ "opengl21", "OpenGL 2.1"},
-		{ "opengl33", "OpenGL 3.3"},
-		{ "opengl43", "OpenGL 4.3"},
-		{ "openges2", "OpenGL ES2"},
-		{ "openges3", "OpenGL ES3"}
-	},
-	default = "opengl33"
+    trigger = "graphics",
+    value = "OPENGL_VERSION",
+    description = "version of OpenGL to build raylib against",
+    allowed = {
+        { "opengl11", "OpenGL 1.1"},
+        { "opengl21", "OpenGL 2.1"},
+        { "opengl33", "OpenGL 3.3"},
+        { "opengl43", "OpenGL 4.3"},
+        { "openges2", "OpenGL ES2"},
+        { "openges3", "OpenGL ES3"}
+    },
+    default = "opengl33"
 }
 
 function download_progress(total, current)
@@ -38,37 +38,9 @@ function check_raylib()
     os.chdir("../")
 end
 
-function check_curl()
-    local curl_source_dll_path = path.join("..", "include", "curl", "bin", "libcurl-x64.dll")
-    local curl_dest_dll_path = path.join("..", "bin", "Debug", "libcurl-x64.dll")
-    local dest_dir = path.getdirectory(curl_dest_dll_path)
-
-    if (os.isfile(curl_source_dll_path)) then
-        if (not os.isdir(dest_dir)) then
-             print("Destination directory not found. Creating: " .. dest_dir)
-             os.mkdir(dest_dir)
-        end
-
-        if (os.isfile(curl_dest_dll_path) == false) then
-            print("Curl DLL not found in build output (Debug). Copying from source...")
-            os.copyfile(curl_source_dll_path, curl_dest_dll_path)
-            print("Curl DLL copied to: " .. curl_dest_dll_path)
-        else
-            print("Curl DLL already in build output (Debug): " .. curl_dest_dll_path)
-        end
-    else
-        print("Error: Curl source DLL not found at: " .. curl_source_dll_path)
-        print("Please ensure you have placed the curl binaries in the include/curl/ directory relative to your project root.")
-    end
-end
-
 function build_externals()
      print("calling externals")
      check_raylib()
-     -- Chamar check_curl() apenas para Windows, se necessário
-     filter "system:windows"
-        check_curl()
-     filter{}
 end
 
 function platform_defines()
@@ -161,7 +133,7 @@ workspace (workspaceName)
 
 if (downloadRaylib) then
     build_externals()
-	end
+    end
 
     startproject(workspaceName)
 
@@ -187,13 +159,14 @@ if (downloadRaylib) then
         {
             ["Header Files/*"] = { "../include/**.h",  "../include/**.hpp", "../src/**.h", "../src/**.hpp"},
             ["Source Files/*"] = {"../src/**.c", "src/**.cpp"},
+            ["Widows Resoruce Files/*"] = {"../src/**.rc", "src/**.ico"},
         }
-
+        
         files {"../src/**.c", "../src/**.cpp", "../src/**.h", "../src/**.hpp", "../include/**.h", "../include/**.hpp"}
-    
+        
         filter {"system:windows"}
             files {"../src/*.rc", "../src/*.ico"}
-        
+            
         filter {"system:windows","action:gmake*", "files:**.rc"}
             buildmessage 'Compiling Windows Resources %[%{file.relpath}]'
 
@@ -201,11 +174,11 @@ if (downloadRaylib) then
               'windres.exe "%[%{!file.relpath}]" "%[%{!cfg.objdir}/%{file.basename}.out]" '
            }
         filter{}
-
+        
         includedirs { "../src" }
         includedirs { "../include" }
 
-        links {"raylib", "curl"}
+        links {"raylib"}
 
         cdialect "C17"
         cppdialect "C++17"
@@ -226,18 +199,16 @@ if (downloadRaylib) then
         filter "system:windows"
             defines{"_WIN32"}
             links {"winmm", "gdi32", "opengl32"}
-            libdirs {"../bin/%{cfg.buildcfg}", "../include/curl/lib"}
+            libdirs {"../bin/%{cfg.buildcfg}"}
 
         filter "system:linux"
             links {"pthread", "m", "dl", "rt", "X11"}
-            links {"curl", "nghttp2"}
 
         filter "system:macosx"
             links {"OpenGL.framework", "Cocoa.framework", "IOKit.framework", "CoreFoundation.framework", "CoreAudio.framework", "CoreVideo.framework", "AudioToolbox.framework"}
-            links {"curl", "nghttp2"}
 
         filter{}
-		
+        
 
     project "raylib"
         kind "StaticLib"
