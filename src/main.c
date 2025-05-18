@@ -12,7 +12,7 @@
 
 #include "wordlist.h"
 #include "game.h"
-#include "player.h" // Inclua player.h para a declaração de DrawPlayerInfo
+#include "player.h" 
 #include "leaderboard.h"
 
 #define MAX_INPUT_CHARS 9
@@ -22,12 +22,11 @@ float playerPositionsRadius = 250.0f;
 
 GameManager game = { 0 };
 
-// Variáveis de animação para o wizardLittle
-Rectangle frameRec = { 0.0f, 0.0f, 0.0f, 0.0f }; // Inicializado com 0, será preenchido após carregar a textura
+Rectangle frameRec = { 0.0f, 0.0f, 0.0f, 0.0f }; 
 int currentFrame = 0;
 int framesCounter = 0;
-int framesSpeed = 8; // Ajuste a velocidade conforme necessário
-Texture2D wizardLittle = {0}; // Declarar a textura aqui para estar disponível globalmente no main
+int framesSpeed = 8;
+Texture2D playerSprite1 = {0}; 
 
 int main(void)
 {
@@ -61,8 +60,7 @@ int main(void)
     Texture2D bombTexture = { 0 };
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
-    Texture2D normalModeBackgroundTexture = {0}; // Alterei o nome da variável para ser mais específico
-    // Texture2D wizardLittle = {0}; // Movido para declaração global
+    Texture2D normalModeBackgroundTexture = {0};
 
     bombTexture = LoadTexture("resources/textures/bomb.png");
     if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
@@ -70,24 +68,14 @@ int main(void)
     if (sparkTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load spark texture.");
     arrowTexture = LoadTexture("resources/textures/arrow.png");
     if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
-    // Carregar a textura de background correta
-    normalModeBackgroundTexture = LoadTexture("resources/textures/normalModeBackground.jpg"); // Use o nome do seu arquivo de background
+    normalModeBackgroundTexture = LoadTexture("resources/textures/normalModeBackground.jpg"); 
     if (normalModeBackgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load normalModeBackground texture.");
-    wizardLittle = LoadTexture("resources/textures/wizardLittle.png");
-    if (wizardLittle.id == 0) {
-        TraceLog(LOG_WARNING, "Failed to load wizardLittle texture.");
+    playerSprite1 = LoadTexture("resources/textures/playerSprite1.png");
+    if (playerSprite1.id == 0) {
+        TraceLog(LOG_WARNING, "Failed to load playerSprite1 texture.");
     } else {
-        // Inicializar frameRec após carregar a textura
-        frameRec = (Rectangle){ 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4};
+        frameRec = (Rectangle){ 0.0f, 0.0f, (float)playerSprite1.width/5, (float)playerSprite1.height/4};
     }
-
-
-    // Vector2 wizardLittlePosition = { 350.0f, 280.0f }; // Esta variável não é mais necessária aqui, o DrawPlayerInfo calculará a posição
-    // Rectangle frameRec = { 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4}; // Movido/ajustado
-    // int currentFrame = 0; // Movido para declaração global
-    // int framesCounter = 0; // Movido para declaração global
-    // int framesSpeed = 8; // Movido para declaração global
-
 
     WordList wordList = { NULL, NULL, 0 };
     wordList = LoadWordList("resources/data/palavras.txt");
@@ -98,7 +86,6 @@ int main(void)
     bool playerInputEditMode = false;
 
     GameState currentGameState = MENU;
-    // int selectedMode = 0; // REMOVIDO: Esta variável está declarada externamente em game.h
 
     int menuOption = 0;
     const int maxMenuOptions = 3;
@@ -170,14 +157,10 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                     if (selectedMode == 1) {
                         initialBombTime_value = 10.0f;
-                        // Removido o input de texto aqui, pois a lógica de input deve ser global ou em uma tela dedicada de entrada de nome.
-                        // Se você precisa da entrada de nome, mova essa lógica para um estado/tela apropriado (ex: SELECT_MODE ou uma nova tela).
                     } else {
                         initialBombTime_value = 15.0f;
                     }
 
-                    // Certifique-se de que a variável 'name' tem o nome do jogador aqui, se necessário para InitializeGame
-                    // Se a entrada de nome for em outra tela, passe o nome de forma apropriada.
                     InitializeGame(&game, numPlayersSelectedInMenu, initialBombTime_value, &wordList);
 
                     if (game.firstPlayer == NULL || game.numPlayers == 0) {
@@ -194,26 +177,19 @@ int main(void)
                 if (IsKeyPressed(KEY_BACKSPACE)) {
                     currentGameState = SELECT_PLAYERS;
                 }
-                 // Lógica de input de texto (movida/removida dependendo de onde você quer a entrada de nome)
-                 // Certifique-se que a variável 'name' e a lógica de mouseOnText/letterCount estão no escopo correto se usadas aqui.
             } break;
 
             case PLAYING:
             {
-                // Lógica de animação do wizardLittle (permanece aqui para atualizar a frame globalmente)
                 framesCounter++;
                 if (framesCounter >= (60/framesSpeed)){
                     framesCounter = 0;
                     currentFrame++;
 
-                    // Sua lógica de animação vertical (opção 1)
-                    if(currentFrame > 3) currentFrame = 0; // Anima 4 frames (0, 1, 2, 3)
+                    if(currentFrame > 3) currentFrame = 0; 
 
-                    // spritesheet 5 colunas, 4 linhas
-                    // A posição X fica fixa na terceira coluna (índice 2)
-                    frameRec.x = (float)2 * (float)wizardLittle.width/5;
-                    // A posição Y muda diretamente com o currentFrame (linhas 0 a 3)
-                    frameRec.y = (float)currentFrame * (float)wizardLittle.height/4;
+                    frameRec.x = (float)2 * (float)playerSprite1.width/5;
+                    frameRec.y = (float)currentFrame * (float)playerSprite1.height/4;
                 }
 
 
@@ -228,15 +204,13 @@ int main(void)
 
             case GAME_OVER:
             {
-                // --- Add winner to leaderboard using the function from leaderboard.c ---
                 if (game.numPlayers == 1 && game.firstPlayer != NULL) {
                     Player* winner = game.firstPlayer;
-                    AddToLeaderboard(winner->name, winner->score); // Call AddToLeaderboard
+                    AddToLeaderboard(winner->name, winner->score); 
                     TraceLog(LOG_INFO, TextFormat("Vencedor %s com score %d processado para leaderboard.", winner->name, winner->score));
                 } else if (game.numPlayers == 0) {
                     TraceLog(LOG_INFO, "Nenhum vencedor para adicionar ao leaderboard.");
                 }
-                // --- End Add winner to leaderboard ---
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 {
                     ShutdownGame(&game);
@@ -246,7 +220,6 @@ int main(void)
 
             case LEADERBOARD:
             {
-                // No update logic needed here, just handle input for going back
                 if (IsKeyPressed(KEY_BACKSPACE)) {
                     currentGameState = MENU;
                 }
@@ -263,13 +236,11 @@ int main(void)
         }
 
         BeginDrawing();
-            ClearBackground(RAYWHITE); // Limpa o fundo da tela (pode ser a cor de fundo padrão)
+            ClearBackground(RAYWHITE); 
 
-            // --- Desenhar o background para os estados PLAYING e GAME_OVER ---
             if (currentGameState == PLAYING || currentGameState == GAME_OVER)
             {
-                 if (normalModeBackgroundTexture.id != 0) { // Verifica se a textura foi carregada
-                    // Calcular a proporção da tela e da textura de background
+                 if (normalModeBackgroundTexture.id != 0) { 
                     float screenRatio = (float)currentActualWidth / (float)currentActualHeight;
                     float textureRatio = (float)normalModeBackgroundTexture.width / (float)normalModeBackgroundTexture.height;
 
@@ -308,7 +279,7 @@ int main(void)
                             nameColor = DARKBLUE;
                         }
 
-                        DrawPlayerInfo(player, textFont, nameColor, lifeColor, wizardLittle, frameRec);
+                        DrawPlayerInfo(player, textFont, nameColor, lifeColor, playerSprite1, frameRec);
                     }
                 }
 
@@ -317,12 +288,11 @@ int main(void)
             }
 
 
-            // 4. Desenha elementos específicos de cada estado (menus, UI de jogo, etc.)
             switch (currentGameState)
             {
                 case MENU:
                 {
-                    ClearBackground(DARKGRAY); // Fundo para o menu
+                    ClearBackground(DARKGRAY); 
                     const char* menuTitle = "BOMB PARTY";
                     Vector2 titlePos = {GetScreenWidth()/2 - MeasureText(menuTitle, 40)/2, GetScreenHeight()/3};
                     DrawText(menuTitle, titlePos.x, titlePos.y, 40, RAYWHITE);
@@ -339,7 +309,7 @@ int main(void)
 
                 case SELECT_PLAYERS:
                 {
-                    ClearBackground(BLACK); // Fundo para seleção de jogadores
+                    ClearBackground(BLACK); 
                     const char* selectPlayersTitle = "Selecione o número de jogadores";
                     Vector2 selectPlayersTitlePos = {GetScreenWidth()/2 - MeasureText(selectPlayersTitle, 30)/2, 50};
                     DrawText(selectPlayersTitle, selectPlayersTitlePos.x, selectPlayersTitlePos.y, 30, RAYWHITE);
@@ -358,7 +328,7 @@ int main(void)
 
                 case SELECT_MODE:
                 {
-                     ClearBackground(DARKGRAY); // Fundo para seleção de modo
+                     ClearBackground(DARKGRAY); 
 
                     const char* selectModeTitle = "Selecione o modo de jogo";
                     Vector2 selectModeTitlePos = {GetScreenWidth()/2 - MeasureText(selectModeTitle, 30)/2, 50};
@@ -442,9 +412,6 @@ int main(void)
 
                 case PLAYING:
                 {
-                    // Elementos do jogo (bomba, seta, sílaba, input box) são desenhados aqui
-                    // O background já foi desenhado no início da seção BeginDrawing.
-
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
 
@@ -469,7 +436,6 @@ int main(void)
 
                         DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
                     } else if (game.currentPlayer == NULL && currentGameState == PLAYING && game.numPlayers > 0) {
-                         // Este log pode ser removido ou ajustado se a transição para GAME_OVER for imediata
                          TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0. (Drawing)");
                     }
 
@@ -505,14 +471,12 @@ int main(void)
                         DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
 
-                    // A linha DrawTextureRec(wizardLittle, frameRec, wizardLittlePosition, WHITE); não é mais necessária aqui
-                    // pois o wizard será desenhado dentro do DrawPlayerInfo para cada jogador.
 
                 } break;
 
                 case GAME_OVER:
                 {
-                    ClearBackground(RAYWHITE); // Desenha um fundo branco para o Game Over.
+                    ClearBackground(RAYWHITE); 
 
                     const char* gameOverText = "Fim de Jogo!";
                     char winnerText[100] = {0};
@@ -547,18 +511,12 @@ int main(void)
 
                 case LEADERBOARD:
                 {
-                    // O background do leaderboard é desenhado aqui
-                     ClearBackground(RAYWHITE); // Ou outra cor/textura para o leaderboard
-                    // --- Draw Leaderboard using the function from leaderboard.c ---
+                    ClearBackground(RAYWHITE); 
                     DrawLeaderboard(textFont, currentActualWidth, currentActualHeight);
-                    // --- End Draw Leaderboard ---
-
-                    // The back key handling is already in the update section for LEADERBOARD state
                 } break;
 
                 case CREDITS:
                 {
-                    // O background dos créditos é desenhado aqui
                     ClearBackground(GRAY);
                     DrawText("CREDITOS", GetScreenWidth()/2 - MeasureText("CREDITOS", 40)/2, GetScreenHeight()/3, 40, BLACK);
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
@@ -572,7 +530,6 @@ int main(void)
         EndDrawing();
     }
 
-    // Ensure game resources are shut down on window close
     ShutdownGame(&game);
 
     UnloadWordList(&wordList);
@@ -585,8 +542,8 @@ int main(void)
     if (bombTexture.id != 0) UnloadTexture(bombTexture);
     if (sparkTexture.id != 0) UnloadTexture(sparkTexture);
     if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
-    if (normalModeBackgroundTexture.id != 0) UnloadTexture(normalModeBackgroundTexture); // Descarregar a textura de background
-    if (wizardLittle.id != 0) UnloadTexture(wizardLittle); // Descarregar a textura global
+    if (normalModeBackgroundTexture.id != 0) UnloadTexture(normalModeBackgroundTexture);
+    if (playerSprite1.id != 0) UnloadTexture(playerSprite1);
 
     CloseWindow();
 
