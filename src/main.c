@@ -188,16 +188,13 @@ int main(void)
 
             case PLAYING:
             {
-                // Lógica de animação do wizardLittle (permanece aqui para atualizar a frame globalmente)
                 framesCounter++;
                 if (framesCounter >= (60/framesSpeed)){
                     framesCounter = 0;
                     currentFrame++;
 
-                    // Sua lógica de animação vertical (opção 1)
                     if(currentFrame > 3) currentFrame = 0;
-                    // Ajuste a coluna (o '1' abaixo) se suas frames estiverem em uma coluna diferente
-                    frameRec.x = (float)1 * (float)wizardLittle.width/5; // Exemplo: segunda coluna
+                    frameRec.x = (float)2 * (float)wizardLittle.width/5; // culumns [0, 1, 2]
                     frameRec.y = (float)currentFrame * (float)wizardLittle.height/4;
                 }
 
