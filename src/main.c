@@ -155,7 +155,39 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                     if (selectedMode == 1) {
                         initialBombTime_value = 10.0f;
-                        if (CheckCollisionPointRec(GetMousePosition(), textBox)) mouseOnText = true;
+                        
+                    } else {
+                        initialBombTime_value = 15.0f;
+                    }
+
+                    InitializeGame(&game, numPlayersSelectedInMenu, initialBombTime_value, &wordList);
+
+                    if (game.firstPlayer == NULL || game.numPlayers == 0) {
+                        TraceLog(LOG_ERROR, "Falha ao iniciar o jogo apos selecao de modo.");
+                        currentGameState = MENU;
+                    } else {
+                        playerInputEditMode = true;
+                        playerInput[0] = '\0';
+                        GuiSetState(STATE_NORMAL);
+                        if(selectedMode == 1)
+                        {
+                            currentGameState = TOPIC_INPUT;
+                        }
+                        else{
+                            currentGameState = PLAYING;
+                        }
+                        
+                    }
+                }
+
+                if (IsKeyPressed(KEY_BACKSPACE)) {
+                    currentGameState = SELECT_PLAYERS;
+                }
+            } break;
+
+            case TOPIC_INPUT:
+            {
+                if (CheckCollisionPointRec(GetMousePosition(), textBox)) mouseOnText = true;
                         else mouseOnText = false;
 
                         if (mouseOnText)
@@ -191,27 +223,9 @@ int main(void)
 
                         if (mouseOnText) framesCounter++;
                         else framesCounter = 0;
-                    } else {
-                        initialBombTime_value = 15.0f;
-                    }
 
-                    InitializeGame(&game, numPlayersSelectedInMenu, initialBombTime_value, &wordList);
-
-                    if (game.firstPlayer == NULL || game.numPlayers == 0) {
-                        TraceLog(LOG_ERROR, "Falha ao iniciar o jogo apos selecao de modo.");
-                        currentGameState = MENU;
-                    } else {
-                        playerInputEditMode = true;
-                        playerInput[0] = '\0';
-                        GuiSetState(STATE_NORMAL);
                         currentGameState = PLAYING;
-                    }
-                }
-
-                if (IsKeyPressed(KEY_BACKSPACE)) {
-                    currentGameState = SELECT_PLAYERS;
-                }
-            } break;
+            }
 
             case PLAYING:
             {
@@ -341,22 +355,33 @@ int main(void)
 
                 case SELECT_MODE:
                 {
+
                     ClearBackground(DARKGRAY);
+
                     const char* selectModeTitle = "Selecione o modo de jogo";
                     Vector2 selectModeTitlePos = {GetScreenWidth()/2 - MeasureText(selectModeTitle, 30)/2, 50};
                     DrawText(selectModeTitle, selectModeTitlePos.x, selectModeTitlePos.y, 30, RAYWHITE);
-
                     const char *modes[] = { "Normal", "Louco" };
 
                     int startY = 120;
+
                     for (int i = 0; i < 2; i++)
                     {
+
                         Color color = (i == selectedMode) ? SKYBLUE : LIGHTGRAY;
                         int textWidth = MeasureText(modes[i], 25);
                         DrawText(modes[i], GetScreenWidth()/2 - textWidth/2, startY + i * 40, 25, color);
+
                     }
+
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, RAYWHITE);
 
+                } break;
+
+                case TOPIC_INPUT:
+                {
+
+                    int startY = 120;
                     // --- Adicionar o input de texto aqui ---
 
                     // Posição e tamanho da caixa de texto (ajuste conforme necessário)
@@ -394,10 +419,8 @@ int main(void)
                          DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
                     }
 
-
                     // --- Fim do input de texto ---
-
-                } break;
+                }
 
                 case PLAYING:
                 {

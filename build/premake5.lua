@@ -214,7 +214,7 @@ if (downloadRaylib) then
         filter "system:windows"
             defines{"_WIN32"}
             links {"winmm", "gdi32", "opengl32"}
-            libdirs {"../bin/%{cfg.buildcfg}"}
+            libdirs {"../bin/%{cfg.buildcfg}", "../include/curl/lib"}
 
         filter "system:linux"
             links {"pthread", "m", "dl", "rt", "X11"}

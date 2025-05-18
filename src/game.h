@@ -12,6 +12,7 @@ typedef enum GameState {
     SELECT_PLAYERS,
     SELECT_PALYERS_NAME,
     SELECT_MODE,
+    TOPIC_INPUT,
     LEADERBOARD,
     CREDITS,
     PLAYING,
