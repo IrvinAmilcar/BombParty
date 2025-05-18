@@ -248,7 +248,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     //Adicionar a função da ia
-                    generate_word_list(name, "palavras_da_ia");
+                    generate_word_list(name, "palavras_da_ia.txt");
                     currentGameState = PLAYING;
                 }
             } break;
