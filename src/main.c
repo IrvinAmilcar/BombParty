@@ -62,7 +62,6 @@ int main(void)
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
     Texture2D backgroundTexture = {0};
-    // Texture2D wizardLittle = {0}; // Movido para declaração global
 
     bombTexture = LoadTexture("resources/textures/bomb.png");
     if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
@@ -79,14 +78,6 @@ int main(void)
         // Inicializar frameRec após carregar a textura
         frameRec = (Rectangle){ 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4};
     }
-
-
-    // Vector2 wizardLittlePosition = { 350.0f, 280.0f }; // Esta variável não é mais necessária aqui, o DrawPlayerInfo calculará a posição
-    // Rectangle frameRec = { 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4}; // Movido/ajustado
-    // int currentFrame = 0; // Movido para declaração global
-    // int framesCounter = 0; // Movido para declaração global
-    // int framesSpeed = 8; // Movido para declaração global
-
 
     WordList wordList = { NULL, NULL, 0 };
     wordList = LoadWordList("resources/data/palavras.txt");
