@@ -44,6 +44,7 @@ int main(void)
     srand(time(NULL));
 
     InitWindow(initialScreenWidth, initialScreenHeight, "BombParty");
+    ToggleFullscreen();
     char name[MAX_INPUT_CHARS + 1] = "\0";
     int letterCount = 0;
 
@@ -118,6 +119,7 @@ int main(void)
 
     while (!WindowShouldClose())
     {
+        //ToggleFullscreen();
         int currentActualWidth = GetScreenWidth();
         int currentActualHeight = GetScreenHeight();
 
@@ -244,7 +246,7 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER))
                 {
                     //Adicionar a função da ia
-                    generate_word_list(name, "palavras_da_ia.txt");
+                    generate_word_list(name, "resources/data/palavras_da_ia.txt");
                     currentGameState = PLAYING;
                 }
             } break;

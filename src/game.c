@@ -270,7 +270,7 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
 
     } else {
     
-        char *aiFile = lerArquivoParaString("resources/data/palavras_da_ia.txt");
+        //char *aiFile = lerArquivoParaString("resources/data/palavras_da_ia.txt");
         
 
         TraceLog(LOG_INFO, TextFormat("Processing submitted input: '%s'", playerInput));
@@ -283,7 +283,7 @@ static bool ProcessPlayerInput(GameManager* game, char* playerInput, bool* playe
             TraceLog(LOG_INFO, TextFormat("%s pontou! Score atual: %d", game->currentPlayer->name, game->currentPlayer->score));
             playerInput[0] = '\0'; // Clear input buffer
             
-            bool isValid2 = isWordInAIlist(playerInput, aiFile);
+            bool isValid2 = isWordInAIlist(playerInput, "resources/data/palavras_da_ia.txt");
             if (isValid2){
                 TraceLog(LOG_INFO, TextFormat("Palavra '%s' valida pela IA!", playerInput));
                 game ->  currentPlayer -> powerUP = generatePowerUp(); //Player ativo recebe um powerUP (1 - 4)!

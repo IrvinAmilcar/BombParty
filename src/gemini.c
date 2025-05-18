@@ -14,10 +14,8 @@
 
 // --- Endpoint da API Google Generative Language (Gemini) ---
 #define GEMINI_API_BASE_URL "https://generativelanguage.googleapis.com"
-#define GEMINI_API_ENDPOINT "/v1/models/gemini-pro:generateContent" // Ou outro modelo, se preferir
-
-#define GEMINI_API_BASE_URL "https://generativelanguage.googleapis.com"
-#define GEMINI_API_ENDPOINT "/v1/models/gemini-pro:generateContent" // Ou outro modelo, se preferir
+// Corrija AQUI o nome do modelo para 'gemini-1.0-pro'
+#define GEMINI_API_ENDPOINT "v1beta/models/gemini-1.5-flash-latest:generateContent?key=" API_KEY
 
 // --- Definições assumidas (ajuste conforme seu projeto) ---
 // struct StringBuf e funções sbInit, sbWrite
@@ -79,31 +77,125 @@ void generate_word_list(const char *theme, const char *output_file_path) {
     fprintf(stderr, "DEBUG: CURL inicializado com sucesso.\n");
 
     StringBuf response;
-    sbInit(&response); // Inicializa o buffer para a resposta
+    sbInit(&response);
     fprintf(stderr, "DEBUG: StringBuf inicializado.\n");
+
+    struct curl_slist *headers = NULL;
+    cJSON *request_json = NULL; // Ponteiro para a estrutura JSON da requisição
+    char *request_body_str = NULL; // Ponteiro para a string do corpo da requisição
 
 
     // --- 1. Construir a URL com a chave API ---
-    char url[2048]; // Aumenta o buffer para a URL, se necessário
-    snprintf(url, sizeof(url), "%s%s?key=%s", GEMINI_API_BASE_URL, GEMINI_API_ENDPOINT, API_KEY);
+    char url[2048];
+    snprintf(url, sizeof(url), "%s/%s", GEMINI_API_BASE_URL, GEMINI_API_ENDPOINT); // Adiciona a barra '/'
     fprintf(stderr, "DEBUG: URL construida: %s\n", url);
 
 
-    // --- 2. Preparar o corpo da requisição (JSON com o prompt e maxOutputTokens) ---
-    char prompt[512]; // Buffer para o prompt
-    snprintf(prompt, sizeof(prompt), "Liste até %d palavras relacionadas a \"%s\". Separe as palavras por vírgulas. Retorne apenas as palavras em Português. Não inclua frases de introdução ou conclusão.", MAX_PALAVRAS, theme); //Prompt pra IA!
-    fprintf(stderr, "DEBUG: Prompt construído: %s\n", prompt);
+    // --- 2. Preparar o corpo da requisição (Construindo JSON com cJSON) ---
+    char prompt_text[512];
+    snprintf(prompt_text, sizeof(prompt_text), "Liste até %d palavras relacionadas a \"%s\". Separe as palavras por vírgulas. Retorne apenas as palavras em Português. Não inclua frases de introdução ou conclusão.", MAX_PALAVRAS, theme);
+    fprintf(stderr, "DEBUG: Prompt construído: %s\n", prompt_text);
 
-    // Incluindo maxOutputTokens no corpo da requisição para garantir que a resposta seja longa o suficiente
-    // 100 palavras podem precisar de ~400-600 tokens. Usar 800-1000 para ter margem.
-    char request_body[2048]; // Aumenta o buffer para o corpo JSON
-    snprintf(request_body, sizeof(request_body),
-             "{\"contents\": [{\"parts\": [{\"text\": \"%s\"}]}], \"maxOutputTokens\": 800}", prompt);
-    fprintf(stderr, "DEBUG: Corpo da requisicao construido: %s\n", request_body);
+    // Construir a estrutura JSON programaticamente
+    request_json = cJSON_CreateObject();
+    if (!request_json) {
+        fprintf(stderr, "DEBUG: Erro ao criar objeto JSON raiz para requisicao.\n");
+        // LIMPEZA
+        curl_slist_free_all(headers); // headers é NULL aqui, mas boa prática de limpeza
+        curl_easy_cleanup(curl);
+        free(response.ptr); // response.ptr é NULL aqui, mas boa prática
+        fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_CreateObject (raiz).\n");
+        return;
+    }
+
+    cJSON *contents_array = cJSON_CreateArray();
+     if (!contents_array) {
+         fprintf(stderr, "DEBUG: Erro ao criar array 'contents' para requisicao.\n");
+         // LIMPEZA
+         cJSON_Delete(request_json); // Libera o objeto JSON já criado
+         curl_slist_free_all(headers);
+         curl_easy_cleanup(curl);
+         free(response.ptr);
+         fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_CreateArray (contents).\n");
+         return;
+     }
+     cJSON_AddItemToObject(request_json, "contents", contents_array);
+
+
+    cJSON *content_item = cJSON_CreateObject();
+      if (!content_item) {
+          fprintf(stderr, "DEBUG: Erro ao criar objeto 'content' para requisicao.\n");
+          // LIMPEZA
+          cJSON_Delete(request_json);
+          curl_slist_free_all(headers);
+          curl_easy_cleanup(curl);
+          free(response.ptr);
+          fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_CreateObject (content).\n");
+          return;
+      }
+      cJSON_AddItemToArray(contents_array, content_item);
+
+
+     cJSON *parts_array = cJSON_CreateArray();
+       if (!parts_array) {
+           fprintf(stderr, "DEBUG: Erro ao criar array 'parts' para requisicao.\n");
+           // LIMPEZA
+           cJSON_Delete(request_json);
+           curl_slist_free_all(headers);
+           curl_easy_cleanup(curl);
+           free(response.ptr);
+           fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_CreateArray (parts).\n");
+           return;
+       }
+       cJSON_AddItemToObject(content_item, "parts", parts_array);
+
+    cJSON *text_item = cJSON_CreateObject();
+      if (!text_item) {
+          fprintf(stderr, "DEBUG: Erro ao criar objeto 'text' para requisicao.\n");
+          // LIMPEZA
+          cJSON_Delete(request_json);
+          curl_slist_free_all(headers);
+          curl_easy_cleanup(curl);
+          free(response.ptr);
+          fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_CreateObject (text).\n");
+          return;
+      }
+      // ADICIONA O PROMPT COMO STRING - cJSON CUIDA DA ESCAPAGEM
+      cJSON_AddStringToObject(text_item, "text", prompt_text);
+      cJSON_AddItemToArray(parts_array, text_item);
+
+    // --- ADICIONA O OBJETO generationConfig E O PARAMETRO maxOutputTokens DENTRO DELE ---
+    cJSON *generation_config = cJSON_CreateObject();
+    if (!generation_config) {
+         fprintf(stderr, "DEBUG: Erro ao criar objeto 'generationConfig' para requisicao.\n");
+         // LIMPEZA
+         cJSON_Delete(request_json);
+         curl_slist_free_all(headers);
+         curl_easy_cleanup(curl);
+         free(response.ptr);
+         fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_CreateObject (generationConfig).\n");
+         return;
+    }
+    cJSON_AddNumberToObject(generation_config, "maxOutputTokens", 800);
+    cJSON_AddItemToObject(request_json, "generationConfig", generation_config); // Adiciona o objeto generationConfig ao root
+
+
+    // Imprime a estrutura JSON para obter a string do corpo da requisição
+    request_body_str = cJSON_PrintUnformatted(request_json);
+     if (!request_body_str) {
+         fprintf(stderr, "DEBUG: Erro ao imprimir estrutura JSON para string.\n");
+         // LIMPEZA
+         cJSON_Delete(request_json); // Libera a estrutura JSON criada
+         curl_slist_free_all(headers);
+         curl_easy_cleanup(curl);
+         free(response.ptr);
+         fprintf(stderr, "DEBUG: Limpeza apos erro cJSON_PrintUnformatted.\n");
+         return;
+     }
+     fprintf(stderr, "DEBUG: Corpo da requisicao JSON construido com cJSON: %s\n", request_body_str);
 
 
     // --- 3. Configurar os cabeçalhos ---
-    struct curl_slist *headers = NULL;
     headers = curl_slist_append(headers, "Content-Type: application/json");
     fprintf(stderr, "DEBUG: Cabecalho Content-Type adicionado.\n");
 
@@ -111,8 +203,8 @@ void generate_word_list(const char *theme, const char *output_file_path) {
     // --- 4. Configurar CURL para POST ---
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(request_body));
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, request_body_str); // Usa a string gerada pelo cJSON
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(request_body_str)); // Define o tamanho
 
     // Configurar a função de escrita para receber a resposta
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, sbWrite);
@@ -133,6 +225,8 @@ void generate_word_list(const char *theme, const char *output_file_path) {
         free(response.ptr);
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+        cJSON_Delete(request_json); // Libera a estrutura JSON da requisicao
+        cJSON_free(request_body_str); // Libera a string do corpo da requisicao
         fprintf(stderr, "DEBUG: Limpeza apos erro CURL.\n");
         return;
     }
@@ -149,20 +243,21 @@ void generate_word_list(const char *theme, const char *output_file_path) {
 
      // Opcional: Verificar se o status HTTP indica um erro (4xx ou 5xx) antes de tentar parsear JSON
      if (http_code >= 400) {
-         fprintf(stderr, "DEBUG: Status HTTP indica erro (%ld). Tentando parsear para detalhes do erro.\n", http_code);
-         // Pode tentar parsear a resposta como JSON aqui para ver se há um objeto de erro detalhado
-         // ... (codigo para parsear e imprimir {"error": {...}}) ...
-         // Por enquanto, vamos deixar cair no erro de parsing JSON ou navegacao se nao for o formato esperado.
+         fprintf(stderr, "DEBUG: Status HTTP indica erro (%ld). A API retornou um erro.\n", http_code);
+         // A resposta bruta já foi impressa acima. Se ela for JSON de erro,
+         // o parsing/navegação abaixo pode falhar e imprimir mais detalhes.
      }
 
 
-    // Verifica se a resposta foi recebida no buffer
+    // Verifica se a resposta foi recebida no buffer e tem algum conteudo (mesmo que seja JSON de erro)
     if (response.ptr == NULL || response.len == 0) {
          fprintf(stderr, "DEBUG: Resposta da API vazia ou nula apos perform.\n");
          // LIMPEZA
-         free(response.ptr);
+         free(response.ptr); // Ainda tentar liberar, mesmo que NULL
          curl_slist_free_all(headers);
          curl_easy_cleanup(curl);
+         cJSON_Delete(request_json);
+         cJSON_free(request_body_str);
          fprintf(stderr, "DEBUG: Limpeza apos resposta vazia.\n");
          return;
     }
@@ -170,18 +265,23 @@ void generate_word_list(const char *theme, const char *output_file_path) {
 
 
     // --- 7. Processar a resposta (Parsing JSON) ---
-    cJSON *json = cJSON_Parse(response.ptr);
-    if (!json) {
+    cJSON *response_json = cJSON_Parse(response.ptr); // response.ptr contém o JSON da resposta
+    if (!response_json) {
         const char *parse_error = cJSON_GetErrorPtr();
         if (parse_error) {
             fprintf(stderr, "DEBUG: Erro ao analisar a resposta JSON da API (antes: %s).\n", parse_error);
         } else {
              fprintf(stderr, "DEBUG: Erro desconhecido ao analisar a resposta JSON da API.\n");
         }
+        fprintf(stderr, "DEBUG: Resposta bruta que falhou o parsing JSON:\n%s\n", response.ptr); // Imprimir novamente a bruta se o parse falhou
+
         // LIMPEZA em caso de erro JSON parse
         free(response.ptr);
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+        cJSON_Delete(request_json); // Libera a estrutura JSON da requisicao
+        cJSON_free(request_body_str); // Libera a string do corpo da requisicao
+        // response_json é NULL aqui, não precisa deletar
         fprintf(stderr, "DEBUG: Limpeza apos erro JSON parse.\n");
         return;
     }
@@ -189,77 +289,79 @@ void generate_word_list(const char *theme, const char *output_file_path) {
 
 
     // --- 8. Navegar na estrutura JSON da resposta da API Gemini ---
-    const cJSON *candidates = cJSON_GetObjectItemCaseSensitive(json, "candidates");
+    // Verifica se eh uma resposta de sucesso com "candidates" ou uma resposta de erro com "error"
+    const cJSON *candidates = cJSON_GetObjectItemCaseSensitive(response_json, "candidates");
+    const cJSON *error_obj = cJSON_GetObjectItemCaseSensitive(response_json, "error"); // Verifica se tem objeto de erro
+
     const char *generated_text = NULL;
 
-    if (!cJSON_IsArray(candidates) || cJSON_GetArraySize(candidates) == 0) {
-         fprintf(stderr, "DEBUG: JSON nao contem 'candidates' array valido ou vazio.\n");
-          // Pode inspecionar o JSON completo aqui para debug:
-         char *json_string_dbg = cJSON_Print(json);
-         if(json_string_dbg) {
-            fprintf(stderr, "DEBUG: Conteudo do JSON parseado:\n%s\n", json_string_dbg);
-            cJSON_free(json_string_dbg); // Use cJSON_Free para strings de cJSON_Print
+    if (error_obj && cJSON_IsObject(error_obj)) {
+         // A resposta eh um objeto de erro da API
+         fprintf(stderr, "DEBUG: A resposta da API eh um objeto de ERRO.\n");
+         char *error_string_dbg = cJSON_Print(response_json);
+         if(error_string_dbg) {
+            fprintf(stderr, "DEBUG: Conteudo do objeto de ERRO:\n%s\n", error_string_dbg);
+            cJSON_free(error_string_dbg);
          }
+         // Não há generated_text em uma resposta de erro. Sair.
+         // generated_text continua NULL. O código abaixo vai para o tratamento de generated_text == NULL.
 
-         // LIMPEZA
-         cJSON_Delete(json);
-         free(response.ptr);
-         curl_slist_free_all(headers);
-         curl_easy_cleanup(curl);
-         fprintf(stderr, "DEBUG: Limpeza apos navegacao JSON falhar (candidates ausente/invalido).\n");
-         return;
-    }
-    fprintf(stderr, "DEBUG: Encontrado 'candidates' array valido.\n");
-
-    // Tentativa de navegar para o texto gerado
-    const cJSON *first_candidate = cJSON_GetArrayItem(candidates, 0);
-    if (cJSON_IsObject(first_candidate)) {
-        const cJSON *content = cJSON_GetObjectItemCaseSensitive(first_candidate, "content");
-        if (cJSON_IsObject(content)) {
-            const cJSON *parts = cJSON_GetObjectItemCaseSensitive(content, "parts");
-             if (cJSON_IsArray(parts) && cJSON_GetArraySize(parts) > 0) {
-                 const cJSON *text_part = cJSON_GetArrayItem(parts, 0);
-                 if (cJSON_IsObject(text_part)) {
-                     const cJSON *text = cJSON_GetObjectItemCaseSensitive(text_part, "text");
-                     if (cJSON_IsString(text) && text->valuestring != NULL) {
-                         generated_text = text->valuestring; // Encontrou o texto gerado!
+    } else if (cJSON_IsArray(candidates) && cJSON_GetArraySize(candidates) > 0) {
+        // A resposta eh de sucesso e contem 'candidates' array
+        fprintf(stderr, "DEBUG: A resposta da API contem 'candidates' array valido.\n");
+        const cJSON *first_candidate = cJSON_GetArrayItem(candidates, 0);
+        if (cJSON_IsObject(first_candidate)) {
+            const cJSON *content = cJSON_GetObjectItemCaseSensitive(first_candidate, "content");
+            if (cJSON_IsObject(content)) {
+                const cJSON *parts = cJSON_GetObjectItemCaseSensitive(content, "parts");
+                 if (cJSON_IsArray(parts) && cJSON_GetArraySize(parts) > 0) {
+                     const cJSON *text_part = cJSON_GetArrayItem(parts, 0);
+                     if (cJSON_IsObject(text_part)) {
+                         const cJSON *text = cJSON_GetObjectItemCaseSensitive(text_part, "text");
+                         if (cJSON_IsString(text) && text->valuestring != NULL) {
+                             generated_text = text->valuestring; // Encontrou o texto gerado!
+                             fprintf(stderr, "DEBUG: Texto gerado extraido com sucesso (primeiras 100 chars): '%.100s%s'\n", generated_text, strlen(generated_text) > 100 ? "..." : "");
+                         } else {
+                             fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair campo 'text' ou nao eh string valida no primeiro part.\n");
+                         }
                      } else {
-                         fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair campo 'text' ou nao eh string valida.\n");
+                          fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair primeiro item de 'parts' como objeto.\n");
                      }
                  } else {
-                      fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair primeiro item de 'parts' como objeto.\n");
+                      fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair 'parts' array valido ou vazio no content.\n");
                  }
-             } else {
-                  fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair 'parts' array valido ou vazio.\n");
-             }
+            } else {
+                 fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair 'content' object valido no primeiro candidate.\n");
+            }
         } else {
-             fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair 'content' object valido.\n");
+             fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair primeiro item de 'candidates' como objeto.\n");
         }
+
     } else {
-         fprintf(stderr, "DEBUG: Nao foi possivel encontrar/extrair primeiro item de 'candidates' como objeto.\n");
+        // Resposta JSON valida, mas nao eh erro E nao eh sucesso esperado (candidates)
+        fprintf(stderr, "DEBUG: Resposta JSON parseada, mas nao eh objeto de erro nem resposta de sucesso esperada ('candidates' ausente ou invalido).\n");
+        char *json_string_dbg = cJSON_Print(response_json);
+         if(json_string_dbg) {
+            fprintf(stderr, "DEBUG: Conteudo do JSON inesperado:\n%s\n", json_string_dbg);
+            cJSON_free(json_string_dbg);
+         }
     }
 
 
-    // Verificar se conseguimos extrair o texto gerado
+    // Verificar se conseguimos extrair o texto gerado (so entra aqui se generated_text ainda for NULL)
     if (generated_text == NULL) {
-        fprintf(stderr, "DEBUG: generated_text final eh NULL. Nao foi possivel extrair o texto gerado da resposta JSON.\n");
-        // Pode inspecionar o JSON completo aqui para debug:
-        char *json_string_dbg = cJSON_Print(json);
-        if(json_string_dbg) {
-           fprintf(stderr, "DEBUG: Conteudo do JSON parseado:\n%s\n", json_string_dbg);
-           cJSON_free(json_string_dbg); // Use cJSON_Free para strings de cJSON_Print
-        }
-
+        fprintf(stderr, "DEBUG: generated_text final eh NULL. Nao foi possivel extrair o texto gerado.\n");
 
         // LIMPEZA
-        cJSON_Delete(json); // Libera a estrutura JSON
+        cJSON_Delete(response_json); // Libera a estrutura JSON da resposta
         free(response.ptr);
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+        cJSON_Delete(request_json); // Libera a estrutura JSON da requisicao
+        cJSON_free(request_body_str); // Libera a string do corpo da requisicao
         fprintf(stderr, "DEBUG: Limpeza apos generated_text ser NULL.\n");
         return;
     }
-    fprintf(stderr, "DEBUG: Texto gerado extraido com sucesso (primeiras 100 chars): '%.100s%s'\n", generated_text, strlen(generated_text) > 100 ? "..." : "");
 
 
     // --- 9. Processar o texto gerado e escrever no arquivo ---
@@ -268,10 +370,12 @@ void generate_word_list(const char *theme, const char *output_file_path) {
     if (!output_file) {
         fprintf(stderr, "DEBUG: Erro fatal ao abrir o arquivo de saida '%s'. Permissao? Caminho?\n", output_file_path);
         // LIMPEZA em caso de erro de arquivo
-        cJSON_Delete(json);
+        cJSON_Delete(response_json); // Libera a estrutura JSON da resposta
         free(response.ptr);
         curl_slist_free_all(headers);
         curl_easy_cleanup(curl);
+        cJSON_Delete(request_json); // Libera a estrutura JSON da requisicao
+        cJSON_free(request_body_str); // Libera a string do corpo da requisicao
         fprintf(stderr, "DEBUG: Limpeza apos erro ao abrir arquivo.\n");
         return;
     }
@@ -291,9 +395,11 @@ void generate_word_list(const char *theme, const char *output_file_path) {
 
 
     // --- 10. Limpeza Final (Sucesso) ---
-    cJSON_Delete(json); // Libera a estrutura JSON
+    cJSON_Delete(response_json); // Libera a estrutura JSON da resposta
     free(response.ptr); // Libera o buffer da resposta
     curl_slist_free_all(headers); // Libera os cabeçalhos
     curl_easy_cleanup(curl); // Limpa o manipulador CURL
+    cJSON_Delete(request_json); // Libera a estrutura JSON da requisicao
+    cJSON_free(request_body_str); // Libera a string do corpo da requisicao
     fprintf(stderr, "DEBUG: Limpeza final concluida.\n");
 }
