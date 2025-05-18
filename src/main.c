@@ -28,6 +28,12 @@ int framesCounter = 0;
 int framesSpeed = 8;
 Texture2D playerSprite1 = {0};
 
+Rectangle normalFireFrameRec = { 0.0f, 0.0f, 0.0f, 0.0f }; 
+int normalFireCurrentFrame = 0; 
+int normalFireFramesCounter = 0;
+int normalFireFramesSpeed = 8; 
+Texture2D normalFireTexture = {0};
+
 int main(void)
 {
     int display = GetCurrentMonitor();
@@ -57,17 +63,11 @@ int main(void)
         textFont = customFont;
     }
 
-    Texture2D bombTexture = { 0 };
-    Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
     Texture2D normalModeBackgroundTexture = {0};
     Texture2D menuBackgroundTexture = {0};
     Texture2D titleTexture = {0};
 
-    bombTexture = LoadTexture("resources/textures/bomb.png");
-    if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
-    sparkTexture = LoadTexture("resources/textures/spark.png");
-    if (sparkTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load spark texture.");
     arrowTexture = LoadTexture("resources/textures/arrow.png");
     if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
 
@@ -80,6 +80,13 @@ int main(void)
     titleTexture = LoadTexture("resources/textures/title.png");
     if (titleTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load title texture.");
 
+
+    normalFireTexture = LoadTexture("resources/textures/normalFire.png");
+    if (normalFireTexture.id == 0) {
+        TraceLog(LOG_WARNING, "Failed to load normalFire texture.");
+    } else {
+        normalFireFrameRec = (Rectangle){ 0.0f, 0.0f, (float)normalFireTexture.width/3, (float)normalFireTexture.height/3 };
+    }
 
     playerSprite1 = LoadTexture("resources/textures/playerSprite1.png");
     if (playerSprite1.id == 0) {
@@ -434,26 +441,6 @@ int main(void)
                          TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0. (Drawing)");
                     }
 
-                    float bombScale = 0.3f;
-                    float bombRotation = 0.0f;
-
-                    Vector2 bombPosition = {
-                        currentActualWidth / 2 - (bombTexture.width * bombScale) / 2,
-                        currentActualHeight / 2 - (bombTexture.height * bombScale) / 2
-                    };
-
-                    float sparkScale = 0.05f;
-                    float sparkRotation = -30.0f + (float)GetTime() * 10.0f;
-                    Vector2 sparkPosition = {
-                        bombPosition.x + bombTexture.width * bombScale * 0.7f,
-                        bombPosition.y + bombTexture.height * bombScale * 0.5f
-                    };
-
-                    if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
-                    if (sparkTexture.id != 0 && bombTexture.id != 0 && game.bombTimer <= 5.0f && fmod((float)GetTime(), 0.5f) < 0.25f) {
-                        DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
-                    }
-
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", game.bombTimer), (Vector2){currentActualWidth - 180, 10}, 25, 0, (game.bombTimer <= 5.0f ? RED : DARKGRAY));
 
                     if (game.currentSyllable != NULL) {
@@ -527,8 +514,6 @@ int main(void)
         UnloadFont(customFont);
     }
 
-    if (bombTexture.id != 0) UnloadTexture(bombTexture);
-    if (sparkTexture.id != 0) UnloadTexture(sparkTexture);
     if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
     if (normalModeBackgroundTexture.id != 0) UnloadTexture(normalModeBackgroundTexture);
     if (menuBackgroundTexture.id != 0) UnloadTexture(menuBackgroundTexture);
