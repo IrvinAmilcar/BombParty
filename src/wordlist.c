@@ -4,7 +4,8 @@
 #include <math.h>   // Incluir para atan2f, sinf, cosf se usados aqui (não são no seu código atual)
 #include <stdbool.h>
 #include <ctype.h>
-
+#include <curl/curl.h>
+#include <cJSON.h>
 #include "raylib.h"   // Necessário para TraceLog, TextFormat, GetRandomValue, LOG_* macros
 
 // Includes criados por nós:
@@ -244,6 +245,29 @@ static void toLowerString(char *string){
     }
 }
 
+static char* trim_whitespace(char* str) {
+    if (!str) return NULL;
+
+    // Remove espaços do início
+    while (isspace((unsigned char)*str)) {
+        str++;
+    }
+
+    // Remove espaços do final
+    if (*str == 0) { // Lida com string vazia após remover espaços iniciais
+        return str;
+    }
+    char* end = str + strlen(str) - 1;
+    while (end > str && isspace((unsigned char)*end)) {
+        end--;
+    }
+
+    // Coloca o terminador nulo no final correto
+    *(end + 1) = '\0';
+
+    return str;
+}
+
 // 1.função: verificar se a palavra está no banco de dados! (Ajustada para usar wordPointers)
 static bool isWordInList(const WordList *list, const char *word){
     if (list == NULL || list->wordPointers == NULL || list->count == 0 || word == NULL) { // Usar wordPointers
@@ -376,16 +400,47 @@ bool isWordInAIlist(const char *word, const char *ai_list_file) {
         return false;
     }
 
-    char line[100];
-    while (fgets(line, sizeof(line), file)) {
-        // Remove a nova linha do final
-        line[strcspn(line, "\n")] = '\0';
-        if (strcmp(line, word) == 0) {
-            fclose(file);
-            return true;
-        }
-    }
+    // Buffer para ler a linha. Precisa ser GRANDE o suficiente
+    // para a linha inteira com todas as palavras e vírgulas.
+    // Se a IA gera 100 palavras separadas por vírgulas e espaços,
+    // o tamanho pode ser > 100 * (tamanho médio da palavra + 2)
+    // Defina um tamanho seguro, por exemplo, 4096 ou mais.
+    char line[4096]; // Aumentado para acomodar listas maiores
 
-    fclose(file);
-    return false;
+    // Lê a primeira (e espera-se, única) linha do arquivo
+    // O loop 'while' ainda funciona, mas só lerá uma linha.
+    if (fgets(line, sizeof(line), file)) {
+        // Remove a nova linha do final, se existir (característica do fgets)
+        line[strcspn(line, "\n")] = '\0';
+
+        // 'line' agora contém algo como "palavra1, palavra2, palavra3, ..."
+
+        // --- Início da Parte Modificada: Dividir a linha e verificar ---
+        char *token;
+        // Usa strtok para obter o primeiro token (palavra) usando ',' como delimitador
+        // strtok modifica a string original (o buffer 'line')
+        token = strtok(line, ",");
+
+        // Itera sobre os tokens restantes
+        while (token != NULL) {
+            // Remove espaços em branco do início e fim do token
+            char *trimmed_token = trim_whitespace(token);
+
+            // Compara o token (que agora é uma palavra individual, limpa)
+            // com a palavra que estamos procurando
+            if (strcmp(trimmed_token, word) == 0) {
+                fclose(file); // Encerra e fecha o arquivo
+                return true;  // Encontrou a palavra na lista!
+            }
+
+            // Obtém o próximo token, passando NULL para strtok
+            token = strtok(NULL, ",");
+        }
+        // --- Fim da Parte Modificada ---
+    }
+    // Se o fgets falhar (arquivo vazio) ou se o loop de tokens terminar
+    // sem encontrar a palavra, a palavra não está na lista.
+
+    fclose(file); // Fecha o arquivo se não retornou antes
+    return false; // Palavra não encontrada na lista
 }

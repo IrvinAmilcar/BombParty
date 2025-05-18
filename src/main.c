@@ -14,6 +14,7 @@
 #include "game.h"
 #include "player.h"
 #include "leaderboard.h"
+#include "gemini.h"
 
 #define MAX_INPUT_CHARS 32
 
@@ -37,8 +38,8 @@ Texture2D normalFireTexture = {0};
 int main(void)
 {
     int display = GetCurrentMonitor();
-    const int initialScreenWidth = GetMonitorPhysicalWidth(display);
-    const int initialScreenHeight = GetMonitorPhysicalHeight(display);
+    const int initialScreenWidth = GetMonitorWidth(display);
+    const int initialScreenHeight = GetMonitorHeight(display);
 
     srand(time(NULL));
 
@@ -246,6 +247,8 @@ int main(void)
 
                 if (IsKeyPressed(KEY_ENTER))
                 {
+                    //Adicionar a função da ia
+                    generate_word_list(name, "palavras_da_ia");
                     currentGameState = PLAYING;
                 }
             } break;
