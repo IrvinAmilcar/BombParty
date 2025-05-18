@@ -20,23 +20,33 @@ Vector2 CalculatePlayerPosition(int playerIndex, int totalPlayers, Vector2 cente
     return position;
 }
 
-void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color lifeColor) {
+void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color lifeColor, Texture2D wizardTexture, Rectangle frameRec) {
     if (player == NULL) {
         return;
     }
 
     float nameWidth = MeasureTextEx(font, player->name, 20, 0).x;
     Vector2 namePos = { player->screenPosition.x - nameWidth / 2.0f, player->screenPosition.y - 25 };
-
     DrawTextEx(font, player->name, namePos, 20, 0, textColor);
 
     char livesText[32];
     snprintf(livesText, sizeof(livesText), "Vidas: %d", player->lives);
-
     float livesWidth = MeasureTextEx(font, livesText, 18, 0).x;
     Vector2 livesPos = { player->screenPosition.x - livesWidth / 2.0f, player->screenPosition.y + 10 };
-
     DrawTextEx(font, livesText, livesPos, 18, 0, lifeColor);
+
+    if (wizardTexture.id != 0) 
+    {
+
+        float offset_y = 25;
+
+        Vector2 wizardDrawPos = {
+            player->screenPosition.x - frameRec.width / 2.0f,
+            namePos.y + MeasureTextEx(font, player->name, 20, 0).y + offset_y
+        };
+
+        DrawTextureRec(wizardTexture, frameRec, wizardDrawPos, WHITE);
+    }
 }
 
 Player *CreatePlayer(const char* name, int lives, Vector2 position){
@@ -54,50 +64,45 @@ Player *CreatePlayer(const char* name, int lives, Vector2 position){
     newPlayer -> next = NULL;
     newPlayer -> prev = NULL;
     newPlayer -> powerUP = 0;
+    newPlayer -> originalIndex = 0;
+    newPlayer -> score = 0;
 
     return newPlayer;
 }
 
 void AddPlayer(Player** head, Player* newPlayer){
 
-    //Primeiro caso (Nenhum elemento adicionado a lista!)
     if ((*head) == NULL){
         *head = newPlayer;
         newPlayer -> next = newPlayer;
         newPlayer -> prev = newPlayer;
 
     } else {
-        // Lista já possui pelo menos um elemento
         Player* ultimo = (*head)->prev;
 
-        // Ajusta os ponteiros para inserir no início
         newPlayer->next = *head;
         newPlayer->prev = ultimo;
         (*head)->prev = newPlayer;
         ultimo->next = newPlayer;
 
-        // Atualiza o head para o novo jogador
         *head = newPlayer;
     }
 }
 
 void RemoveAllPlayers(Player **head) {
     if (*head == NULL) {
-        return; // Lista já vazia
+        return; 
     }
 
     Player *current = *head;
     Player *temp;
 
-    // Percorrer todos os jogadores da lista
     do {
         temp = current;
         current = current->next;
 
-        // Liberar a memória do jogador atual
         free(temp);
-    } while (current != *head); // Termina quando volta para o primeiro jogador
+    } while (current != *head); 
 
-    // Definir o head como NULL para indicar que a lista está vazia
     *head = NULL;
 }

@@ -21,9 +21,7 @@ typedef struct Player {
 
 Vector2 CalculatePlayerPosition(int playerIndex, int totalPlayers, Vector2 center, float radius);
 
-void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color lifeColor);
-
-//Novinhas funny ações:
+void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color lifeColor, Texture2D wizardTexture, Rectangle frameRec);
 
 Player* CreatePlayer(const char* name, int lives, Vector2 position);
 

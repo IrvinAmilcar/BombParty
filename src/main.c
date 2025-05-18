@@ -12,15 +12,22 @@
 
 #include "wordlist.h"
 #include "game.h"
-#include "player.h"
-#include "leaderboard.h" 
+#include "player.h" // Inclua player.h para a declaração de DrawPlayerInfo
+#include "leaderboard.h"
 
-#define MAX_INPUT_CHARS     9
+#define MAX_INPUT_CHARS 9
 
 Vector2 playerPositionsCenter;
 float playerPositionsRadius = 250.0f;
 
 GameManager game = { 0 };
+
+// Variáveis de animação para o wizardLittle
+Rectangle frameRec = { 0.0f, 0.0f, 0.0f, 0.0f }; // Inicializado com 0, será preenchido após carregar a textura
+int currentFrame = 0;
+int framesCounter = 0;
+int framesSpeed = 8; // Ajuste a velocidade conforme necessário
+Texture2D wizardLittle = {0}; // Declarar a textura aqui para estar disponível globalmente no main
 
 int main(void)
 {
@@ -55,7 +62,7 @@ int main(void)
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
     Texture2D backgroundTexture = {0};
-    Texture2D wizardLittle = {0};
+    // Texture2D wizardLittle = {0}; // Movido para declaração global
 
     bombTexture = LoadTexture("resources/textures/bomb.png");
     if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
@@ -66,14 +73,20 @@ int main(void)
     backgroundTexture = LoadTexture("resources/textures/download.jpeg");
     if (backgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load background texture.");
     wizardLittle = LoadTexture("resources/textures/wizardLittle.png");
-    if (wizardLittle.id == 0) TraceLog(LOG_WARNING, "Failed to load wizardLittle texture.");
+    if (wizardLittle.id == 0) {
+        TraceLog(LOG_WARNING, "Failed to load wizardLittle texture.");
+    } else {
+        // Inicializar frameRec após carregar a textura
+        frameRec = (Rectangle){ 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4};
+    }
 
-    Vector2 wizardLittlePosition = { 350.0f, 280.0f };
-    Rectangle frameRec = { 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4};
-    int currentFrame = 0;
 
-    int framesCounter = 0;
-    int framesSpeed = 8;
+    // Vector2 wizardLittlePosition = { 350.0f, 280.0f }; // Esta variável não é mais necessária aqui, o DrawPlayerInfo calculará a posição
+    // Rectangle frameRec = { 0.0f, 0.0f, (float)wizardLittle.width/5, (float)wizardLittle.height/4}; // Movido/ajustado
+    // int currentFrame = 0; // Movido para declaração global
+    // int framesCounter = 0; // Movido para declaração global
+    // int framesSpeed = 8; // Movido para declaração global
+
 
     WordList wordList = { NULL, NULL, 0 };
     wordList = LoadWordList("resources/data/palavras.txt");
@@ -84,6 +97,7 @@ int main(void)
     bool playerInputEditMode = false;
 
     GameState currentGameState = MENU;
+    int selectedMode = 0; // Adicione esta variável se ela não estiver declarada em game.h
 
     int menuOption = 0;
     const int maxMenuOptions = 3;
@@ -155,11 +169,14 @@ int main(void)
                 if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                     if (selectedMode == 1) {
                         initialBombTime_value = 10.0f;
-                        
+                        // Removido o input de texto aqui, pois a lógica de input deve ser global ou em uma tela dedicada de entrada de nome.
+                        // Se você precisa da entrada de nome, mova essa lógica para um estado/tela apropriado (ex: SELECT_MODE ou uma nova tela).
                     } else {
                         initialBombTime_value = 15.0f;
                     }
 
+                    // Certifique-se de que a variável 'name' tem o nome do jogador aqui, se necessário para InitializeGame
+                    // Se a entrada de nome for em outra tela, passe o nome de forma apropriada.
                     InitializeGame(&game, numPlayersSelectedInMenu, initialBombTime_value, &wordList);
 
                     if (game.firstPlayer == NULL || game.numPlayers == 0) {
@@ -169,14 +186,7 @@ int main(void)
                         playerInputEditMode = true;
                         playerInput[0] = '\0';
                         GuiSetState(STATE_NORMAL);
-                        if(selectedMode == 1)
-                        {
-                            currentGameState = TOPIC_INPUT;
-                        }
-                        else{
-                            currentGameState = PLAYING;
-                        }
-                        
+                        currentGameState = PLAYING;
                     }
                 }
 
@@ -185,63 +195,21 @@ int main(void)
                 }
             } break;
 
-            case TOPIC_INPUT:
-            {
-                if (CheckCollisionPointRec(GetMousePosition(), textBox)) mouseOnText = true;
-                        else mouseOnText = false;
-
-                        if (mouseOnText)
-                        {
-                            // Set the window's cursor to the I-Beam
-                            SetMouseCursor(MOUSE_CURSOR_IBEAM);
-
-                            // Get char pressed (unicode character) on the queue
-                            int key = GetCharPressed();
-
-                            // Check if more characters have been pressed on the same frame
-                            while (key > 0)
-                            {
-                                // NOTE: Only allow keys in range [32..125]
-                                if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
-                                {
-                                    name[letterCount] = (char)key;
-                                    name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
-                                    letterCount++;
-                                }
-
-                                key = GetCharPressed();  // Check next character in the queue
-                            }
-
-                            if (IsKeyPressed(KEY_BACKSPACE))
-                            {
-                                letterCount--;
-                                if (letterCount < 0) letterCount = 0;
-                                name[letterCount] = '\0';
-                            }
-                        }
-                        else SetMouseCursor(MOUSE_CURSOR_DEFAULT);
-
-                        if (mouseOnText) framesCounter++;
-                        else framesCounter = 0;
-
-                        currentGameState = PLAYING;
-            }
-
             case PLAYING:
             {
+                // Lógica de animação do wizardLittle (permanece aqui para atualizar a frame globalmente)
                 framesCounter++;
-
                 if (framesCounter >= (60/framesSpeed)){
                     framesCounter = 0;
                     currentFrame++;
-                    
-                    if(currentFrame > 3) currentFrame = 0;
 
-                    // spritesheet 5 colunas:
-                    // frameRec.x = (float)(currentFrame % 5) * (float)wizardLittle.width/5;
-                    // spritesheet 4 linhas:
-                    frameRec.y = (float)(currentFrame / 5) * (float)wizardLittle.height/4;
+                    // Sua lógica de animação vertical (opção 1)
+                    if(currentFrame > 3) currentFrame = 0;
+                    // Ajuste a coluna (o '1' abaixo) se suas frames estiverem em uma coluna diferente
+                    frameRec.x = (float)1 * (float)wizardLittle.width/5; // Exemplo: segunda coluna
+                    frameRec.y = (float)currentFrame * (float)wizardLittle.height/4;
                 }
+
 
                 if (game.currentPlayer == NULL || game.numPlayers <= 0) {
                     TraceLog(LOG_WARNING, "PLAYING state entered with no current player or zero players. Transitioning to GAME_OVER.");
@@ -306,7 +274,8 @@ int main(void)
                             nameColor = DARKBLUE;
                         }
 
-                        DrawPlayerInfo(player, textFont, nameColor, lifeColor);
+                        // Chamar DrawPlayerInfo passando a textura do wizard e a frameRec atual
+                        DrawPlayerInfo(player, textFont, nameColor, lifeColor, wizardLittle, frameRec);
                     }
                 }
 
@@ -485,8 +454,8 @@ int main(void)
                         DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
 
-                    Vector2 wizardLittlePosition = { 350.0f, 280.0f }; 
-                    DrawTextureRec(wizardLittle, frameRec, wizardLittlePosition, WHITE); 
+                    // A linha DrawTextureRec(wizardLittle, frameRec, wizardLittlePosition, WHITE); não é mais necessária aqui
+                    // pois o wizard será desenhado dentro do DrawPlayerInfo para cada jogador.
 
                 } break;
 
@@ -562,7 +531,7 @@ int main(void)
     if (bombTexture.id != 0) UnloadTexture(bombTexture);
     if (sparkTexture.id != 0) UnloadTexture(sparkTexture);
     if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
-    if (wizardLittle.id != 0) UnloadTexture(wizardLittle);
+    if (wizardLittle.id != 0) UnloadTexture(wizardLittle); // Descarregar a textura global
 
     CloseWindow();
 
