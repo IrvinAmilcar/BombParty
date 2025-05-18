@@ -64,14 +64,10 @@ int main(void)
         textFont = customFont;
     }
 
-    Texture2D arrowTexture = { 0 };
     Texture2D normalModeBackgroundTexture = {0};
     Texture2D menuBackgroundTexture = {0};
     Texture2D titleTexture = {0};
     Texture2D backgroundTexture = {0};
-
-    arrowTexture = LoadTexture("resources/textures/arrow.png");
-    if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
 
     normalModeBackgroundTexture = LoadTexture("resources/textures/normalModeBackground.jpg");
     if (normalModeBackgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load normalModeBackground texture.");
@@ -524,30 +520,6 @@ int main(void)
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
 
-                    if (arrowTexture.id != 0 && game.currentPlayer != NULL) {
-                        Vector2 arrowPivot = playerPositionsCenter;
-                        Vector2 targetPlayerPos = game.currentPlayer->screenPosition;
-
-                        Vector2 direction = {
-                            targetPlayerPos.x - arrowPivot.x,
-                            targetPlayerPos.y - arrowPivot.y
-                        };
-
-                        float angle_radians = atan2f(direction.y, direction.x);
-                        float angle_degrees = angle_radians * RAD2DEG;
-                        float arrowDrawingRotation = angle_degrees + 0.0f;
-
-                        float arrowScale = 0.4f;
-
-                        Rectangle sourceRecArrow = { 0.0f, 0.0f, (float)arrowTexture.width, (float)arrowTexture.height };
-                        Rectangle destRecArrow = { arrowPivot.x, arrowPivot.y, arrowTexture.width * arrowScale, arrowTexture.height * arrowScale };
-                        Vector2 originArrow = { (arrowTexture.width * arrowScale) / 2.0f, (arrowTexture.height * arrowScale) / 2.0f };
-
-                        DrawTexturePro(arrowTexture, sourceRecArrow, destRecArrow, originArrow, arrowDrawingRotation, WHITE);
-                    } else if (game.currentPlayer == NULL && currentGameState == PLAYING && game.numPlayers > 0) {
-                         TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0. (Drawing)");
-                    }
-
                     if (normalFireTexture.id != 0) {
                         Vector2 monsterPosition = {
                             currentActualWidth / 2.0f - normalFireFrameRec.width / 0.68f,
@@ -633,7 +605,6 @@ int main(void)
         UnloadFont(customFont);
     }
 
-    if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
     if (normalModeBackgroundTexture.id != 0) UnloadTexture(normalModeBackgroundTexture);
     if (menuBackgroundTexture.id != 0) UnloadTexture(menuBackgroundTexture);
     if (menuBackgroundTexture.id != 0) UnloadTexture(titleTexture);
