@@ -277,31 +277,22 @@ int main(void)
                     Rectangle destRec = { 0.0f, 0.0f, (float)currentActualWidth, (float)currentActualHeight };
                     Vector2 origin = { 0.0f, 0.0f };
 
-                    // Calcular o escalonamento para cobrir a tela mantendo a proporção
                     float scale = 1.0f;
                     if (screenRatio > textureRatio) {
-                        // A tela é mais larga que a textura, escalar pela altura
                         scale = (float)currentActualHeight / (float)normalModeBackgroundTexture.height;
                     } else {
-                        // A tela é mais alta ou tem a mesma proporção, escalar pela largura
                         scale = (float)currentActualWidth / (float)normalModeBackgroundTexture.width;
                     }
 
-                    // Ajustar o destino e origem para centralizar a textura escalonada
                     destRec.width = (float)normalModeBackgroundTexture.width * scale;
                     destRec.height = (float)normalModeBackgroundTexture.height * scale;
                     destRec.x = (float)currentActualWidth / 2.0f - destRec.width / 2.0f;
                     destRec.y = (float)currentActualHeight / 2.0f - destRec.height / 2.0f;
 
-                    // Desenhar o background ajustado
                     DrawTexturePro(normalModeBackgroundTexture, sourceRec, destRec, origin, 0.0f, WHITE);
                  }
             }
-            // --- Fim do desenho do background ---
 
-
-            // 3. Desenha os jogadores e seus elementos (nomes, vidas, wizards)
-            // Este bloco já itera sobre os jogadores e chama DrawPlayerInfo
             if ((currentGameState == PLAYING || currentGameState == GAME_OVER) && game.allocatedPlayersArrayBase != NULL && numPlayersSelectedInMenu > 0) {
 
                 for (int i = 0; i < numPlayersSelectedInMenu; ++i) {
@@ -317,8 +308,6 @@ int main(void)
                             nameColor = DARKBLUE;
                         }
 
-                        // Chamar DrawPlayerInfo passando a textura do wizard e a frameRec atual
-                        // Assumindo que DrawPlayerInfo foi atualizado para aceitar a textura e frameRec
                         DrawPlayerInfo(player, textFont, nameColor, lifeColor, wizardLittle, frameRec);
                     }
                 }
