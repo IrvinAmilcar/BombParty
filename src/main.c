@@ -12,7 +12,7 @@
 
 #include "wordlist.h"
 #include "game.h"
-#include "player.h" 
+#include "player.h"
 #include "leaderboard.h"
 
 #define MAX_INPUT_CHARS 9
@@ -22,11 +22,11 @@ float playerPositionsRadius = 250.0f;
 
 GameManager game = { 0 };
 
-Rectangle frameRec = { 0.0f, 0.0f, 0.0f, 0.0f }; 
+Rectangle frameRec = { 0.0f, 0.0f, 0.0f, 0.0f };
 int currentFrame = 0;
 int framesCounter = 0;
 int framesSpeed = 8;
-Texture2D playerSprite1 = {0}; 
+Texture2D playerSprite1 = {0};
 
 int main(void)
 {
@@ -61,6 +61,8 @@ int main(void)
     Texture2D sparkTexture = { 0 };
     Texture2D arrowTexture = { 0 };
     Texture2D normalModeBackgroundTexture = {0};
+    Texture2D menuBackgroundTexture = {0};
+    Texture2D titleTexture = {0};
 
     bombTexture = LoadTexture("resources/textures/bomb.png");
     if (bombTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load bomb texture.");
@@ -68,8 +70,17 @@ int main(void)
     if (sparkTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load spark texture.");
     arrowTexture = LoadTexture("resources/textures/arrow.png");
     if (arrowTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load arrow texture.");
-    normalModeBackgroundTexture = LoadTexture("resources/textures/normalModeBackground.jpg"); 
+
+    normalModeBackgroundTexture = LoadTexture("resources/textures/normalModeBackground.jpg");
     if (normalModeBackgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load normalModeBackground texture.");
+
+    menuBackgroundTexture = LoadTexture("resources/textures/menuBackground.png");
+    if (menuBackgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load menuBackground texture.");
+
+    titleTexture = LoadTexture("resources/textures/title.png");
+    if (titleTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load title texture.");
+
+
     playerSprite1 = LoadTexture("resources/textures/playerSprite1.png");
     if (playerSprite1.id == 0) {
         TraceLog(LOG_WARNING, "Failed to load playerSprite1 texture.");
@@ -80,7 +91,6 @@ int main(void)
     WordList wordList = { NULL, NULL, 0 };
     wordList = LoadWordList("resources/data/palavras.txt");
     if (wordList.count == 0) TraceLog(LOG_FATAL, "Failed to load word list or word list is empty.");
-
 
     char playerInput[MAX_PLAYER_INPUT_CHARS + 1] = { 0 };
     bool playerInputEditMode = false;
@@ -186,12 +196,11 @@ int main(void)
                     framesCounter = 0;
                     currentFrame++;
 
-                    if(currentFrame > 3) currentFrame = 0; 
+                    if(currentFrame > 3) currentFrame = 0;
 
                     frameRec.x = (float)2 * (float)playerSprite1.width/5;
                     frameRec.y = (float)currentFrame * (float)playerSprite1.height/4;
                 }
-
 
                 if (game.currentPlayer == NULL || game.numPlayers <= 0) {
                     TraceLog(LOG_WARNING, "PLAYING state entered with no current player or zero players. Transitioning to GAME_OVER.");
@@ -206,7 +215,7 @@ int main(void)
             {
                 if (game.numPlayers == 1 && game.firstPlayer != NULL) {
                     Player* winner = game.firstPlayer;
-                    AddToLeaderboard(winner->name, winner->score); 
+                    AddToLeaderboard(winner->name, winner->score);
                     TraceLog(LOG_INFO, TextFormat("Vencedor %s com score %d processado para leaderboard.", winner->name, winner->score));
                 } else if (game.numPlayers == 0) {
                     TraceLog(LOG_INFO, "Nenhum vencedor para adicionar ao leaderboard.");
@@ -236,32 +245,36 @@ int main(void)
         }
 
         BeginDrawing();
-            ClearBackground(RAYWHITE); 
+            ClearBackground(RAYWHITE);
 
-            if (currentGameState == PLAYING || currentGameState == GAME_OVER)
-            {
-                 if (normalModeBackgroundTexture.id != 0) { 
-                    float screenRatio = (float)currentActualWidth / (float)currentActualHeight;
-                    float textureRatio = (float)normalModeBackgroundTexture.width / (float)normalModeBackgroundTexture.height;
+            Texture2D backgroundToDraw = {0};
+            if (currentGameState == MENU) {
+                backgroundToDraw = menuBackgroundTexture;
+            } else if (currentGameState == PLAYING || currentGameState == GAME_OVER) {
+                 backgroundToDraw = normalModeBackgroundTexture;
+            }
 
-                    Rectangle sourceRec = { 0.0f, 0.0f, (float)normalModeBackgroundTexture.width, (float)normalModeBackgroundTexture.height };
-                    Rectangle destRec = { 0.0f, 0.0f, (float)currentActualWidth, (float)currentActualHeight };
-                    Vector2 origin = { 0.0f, 0.0f };
+            if (backgroundToDraw.id != 0) {
+                float screenRatio = (float)currentActualWidth / (float)currentActualHeight;
+                float textureRatio = (float)backgroundToDraw.width / (float)backgroundToDraw.height;
 
-                    float scale = 1.0f;
-                    if (screenRatio > textureRatio) {
-                        scale = (float)currentActualHeight / (float)normalModeBackgroundTexture.height;
-                    } else {
-                        scale = (float)currentActualWidth / (float)normalModeBackgroundTexture.width;
-                    }
+                Rectangle sourceRec = { 0.0f, 0.0f, (float)backgroundToDraw.width, (float)backgroundToDraw.height };
+                Rectangle destRec = { 0.0f, 0.0f, (float)currentActualWidth, (float)currentActualHeight };
+                Vector2 origin = { 0.0f, 0.0f };
 
-                    destRec.width = (float)normalModeBackgroundTexture.width * scale;
-                    destRec.height = (float)normalModeBackgroundTexture.height * scale;
-                    destRec.x = (float)currentActualWidth / 2.0f - destRec.width / 2.0f;
-                    destRec.y = (float)currentActualHeight / 2.0f - destRec.height / 2.0f;
+                float scale = 1.0f;
+                if (screenRatio > textureRatio) {
+                    scale = (float)currentActualHeight / (float)backgroundToDraw.height;
+                } else {
+                    scale = (float)currentActualWidth / (float)backgroundToDraw.width;
+                }
 
-                    DrawTexturePro(normalModeBackgroundTexture, sourceRec, destRec, origin, 0.0f, WHITE);
-                 }
+                destRec.width = (float)backgroundToDraw.width * scale;
+                destRec.height = (float)backgroundToDraw.height * scale;
+                destRec.x = (float)currentActualWidth / 2.0f - destRec.width / 2.0f;
+                destRec.y = (float)currentActualHeight / 2.0f - destRec.height / 2.0f;
+
+                DrawTexturePro(backgroundToDraw, sourceRec, destRec, origin, 0.0f, WHITE);
             }
 
             if ((currentGameState == PLAYING || currentGameState == GAME_OVER) && game.allocatedPlayersArrayBase != NULL && numPlayersSelectedInMenu > 0) {
@@ -287,15 +300,32 @@ int main(void)
                 DrawText("Erro: Jogadores nao inicializados corretamente.", 20, 20, 20, RED);
             }
 
-
             switch (currentGameState)
             {
                 case MENU:
                 {
-                    ClearBackground(DARKGRAY); 
-                    const char* menuTitle = "BOMB PARTY";
-                    Vector2 titlePos = {GetScreenWidth()/2 - MeasureText(menuTitle, 40)/2, GetScreenHeight()/3};
-                    DrawText(menuTitle, titlePos.x, titlePos.y, 40, RAYWHITE);
+
+                    if (titleTexture.id != 0) {
+                        float targetWidth = GetScreenWidth() * 0.3f; 
+                        float scale = targetWidth / titleTexture.width; 
+
+                        float titleWidthScaled = titleTexture.width * scale;
+                        float titleHeightScaled = titleTexture.height * scale;
+
+                        Vector2 titlePos = {
+                            GetScreenWidth()/2.0f - titleWidthScaled/2.0f,
+                            GetScreenHeight()/16.0f 
+                        };
+
+                        DrawTexturePro(titleTexture,
+                                       (Rectangle){0, 0, (float)titleTexture.width, (float)titleTexture.height}, 
+                                       (Rectangle){titlePos.x, titlePos.y, titleWidthScaled, titleHeightScaled}, 
+                                       (Vector2){0,0}, // origem para rotação
+                                       0.0f, // rotação
+                                       WHITE); // cor
+
+                    }
+
 
                     const char *options[] = { "JOGAR", "LEADERBOARD", "CRÉDITOS" };
                     int startY = GetScreenHeight()/2;
@@ -309,7 +339,7 @@ int main(void)
 
                 case SELECT_PLAYERS:
                 {
-                    ClearBackground(BLACK); 
+                    ClearBackground(BLACK);
                     const char* selectPlayersTitle = "Selecione o número de jogadores";
                     Vector2 selectPlayersTitlePos = {GetScreenWidth()/2 - MeasureText(selectPlayersTitle, 30)/2, 50};
                     DrawText(selectPlayersTitle, selectPlayersTitlePos.x, selectPlayersTitlePos.y, 30, RAYWHITE);
@@ -328,7 +358,7 @@ int main(void)
 
                 case SELECT_MODE:
                 {
-                     ClearBackground(DARKGRAY); 
+                    ClearBackground(DARKGRAY);
 
                     const char* selectModeTitle = "Selecione o modo de jogo";
                     Vector2 selectModeTitlePos = {GetScreenWidth()/2 - MeasureText(selectModeTitle, 30)/2, 50};
@@ -348,67 +378,32 @@ int main(void)
 
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, RAYWHITE);
 
-                    // Removido o input de texto desta seção no código anterior,
-                    // se você adicionou uma tela de input separada, mova a lógica de desenho para lá.
-                    // Se a entrada de nome ocorre AQUI, você precisará adicionar a lógica de desenho do input box
-                    // e o texto digitado neste case SELECT_MODE, como estava no código anterior.
-                     // Exemplo (re-adicione se o input de nome for nesta tela):
-                     /*
-                     int nameInputY = startY + 2 * 40 + 50;
-                     Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, (float)nameInputY, 300, 50 };
+                    Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 };
 
-                     DrawText("Digite seu nome:", GetScreenWidth()/2 - MeasureText("Digite seu nome:", 20)/2, (float)nameInputY - 30, 20, RAYWHITE);
+                    DrawText("Digite seu nome:", GetScreenWidth()/2 - MeasureText("Digite seu nome:", 20)/2, nameInputBox.y - 30, 20, RAYWHITE);
 
-                     DrawRectangleRec(nameInputBox, LIGHTGRAY);
-                      if (mouseOnText) {
-                         DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, RED);
-                     } else {
-                         DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, DARKGRAY);
-                     }
-                     DrawTextEx(textFont, name, (Vector2){nameInputBox.x + 5, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
-                     DrawText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), GetScreenWidth()/2 - MeasureText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, DARKGRAY);
-                      if (mouseOnText && letterCount < MAX_INPUT_CHARS) {
-                          if (((framesCounter/20)%2) == 0) {
-                              Vector2 cursor_pos = MeasureTextEx(textFont, name, textFont.baseSize, 0);
-                              DrawTextEx(textFont, "_", (Vector2){nameInputBox.x + 5 + cursor_pos.x, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
-                          }
-                      } else if (letterCount >= MAX_INPUT_CHARS) {
-                          DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
-                      }
-                      */
-
-                } break;
-                 // Se você tem um estado TOPIC_INPUT, o conteúdo de input de texto deve estar lá
-                /*
-                case TOPIC_INPUT:
-                {
-                     // Desenhar background específico para TOPIC_INPUT se necessário
-                     ClearBackground(MAGENTA); // Exemplo
-
-                     int startY = 120;
-                     Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 };
-
-                     DrawText("Digite seu nome:", GetScreenWidth()/2 - MeasureText("Digite seu nome:", 20)/2, (float)nameInputBox.y - 30, 20, RAYWHITE);
-
-                     DrawRectangleRec(nameInputBox, LIGHTGRAY);
+                    DrawRectangleRec(nameInputBox, LIGHTGRAY);
                      if (mouseOnText) {
-                         DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, RED);
-                     } else {
-                         DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, DARKGRAY);
-                     }
-                     DrawTextEx(textFont, name, (Vector2){nameInputBox.x + 5, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
-                     DrawText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), GetScreenWidth()/2 - MeasureText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, DARKGRAY);
-                      if (mouseOnText && letterCount < MAX_INPUT_CHARS) {
-                           if (((framesCounter/20)%2) == 0) {
-                               Vector2 cursor_pos = MeasureTextEx(textFont, name, textFont.baseSize, 0);
-                               DrawTextEx(textFont, "_", (Vector2){nameInputBox.x + 5 + cursor_pos.x, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
-                           }
-                       } else if (letterCount >= MAX_INPUT_CHARS) {
-                           DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
-                       }
-                }
-                break;
-                */
+                        DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, RED);
+                    } else {
+                        DrawRectangleLines((int)nameInputBox.x, (int)nameInputBox.y, (int)nameInputBox.width, (int)nameInputBox.height, DARKGRAY);
+                    }
+
+                    DrawTextEx(textFont, name, (Vector2){nameInputBox.x + 5, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
+
+                    DrawText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), GetScreenWidth()/2 - MeasureText(TextFormat("CARACTERES: %i/%i", letterCount, MAX_INPUT_CHARS), 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, DARKGRAY);
+
+                    if (mouseOnText && letterCount < MAX_INPUT_CHARS)
+                    {
+                         if (((framesCounter/20)%2) == 0) {
+                             Vector2 cursor_pos = MeasureTextEx(textFont, name, textFont.baseSize, 0);
+                             DrawTextEx(textFont, "_", (Vector2){nameInputBox.x + 5 + cursor_pos.x, nameInputBox.y + (nameInputBox.height - textFont.baseSize)/2}, textFont.baseSize, 0, MAROON);
+                         }
+                    }
+                    else if (letterCount >= MAX_INPUT_CHARS) {
+                         DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
+                    }
+                } break;
 
                 case PLAYING:
                 {
@@ -439,7 +434,6 @@ int main(void)
                          TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0. (Drawing)");
                     }
 
-
                     float bombScale = 0.3f;
                     float bombRotation = 0.0f;
 
@@ -455,12 +449,10 @@ int main(void)
                         bombPosition.y + bombTexture.height * bombScale * 0.5f
                     };
 
-
                     if (bombTexture.id != 0) DrawTextureEx(bombTexture, bombPosition, bombRotation, bombScale, WHITE);
                     if (sparkTexture.id != 0 && bombTexture.id != 0 && game.bombTimer <= 5.0f && fmod((float)GetTime(), 0.5f) < 0.25f) {
                         DrawTextureEx(sparkTexture, sparkPosition, sparkRotation, sparkScale, WHITE);
                     }
-
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", game.bombTimer), (Vector2){currentActualWidth - 180, 10}, 25, 0, (game.bombTimer <= 5.0f ? RED : DARKGRAY));
 
@@ -470,14 +462,10 @@ int main(void)
                     } else {
                         DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
                     }
-
-
                 } break;
 
                 case GAME_OVER:
                 {
-                    ClearBackground(RAYWHITE); 
-
                     const char* gameOverText = "Fim de Jogo!";
                     char winnerText[100] = {0};
 
@@ -511,7 +499,7 @@ int main(void)
 
                 case LEADERBOARD:
                 {
-                    ClearBackground(RAYWHITE); 
+                    ClearBackground(RAYWHITE);
                     DrawLeaderboard(textFont, currentActualWidth, currentActualHeight);
                 } break;
 
@@ -543,6 +531,8 @@ int main(void)
     if (sparkTexture.id != 0) UnloadTexture(sparkTexture);
     if (arrowTexture.id != 0) UnloadTexture(arrowTexture);
     if (normalModeBackgroundTexture.id != 0) UnloadTexture(normalModeBackgroundTexture);
+    if (menuBackgroundTexture.id != 0) UnloadTexture(menuBackgroundTexture);
+    if (menuBackgroundTexture.id != 0) UnloadTexture(titleTexture);
     if (playerSprite1.id != 0) UnloadTexture(playerSprite1);
 
     CloseWindow();
