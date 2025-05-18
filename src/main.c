@@ -270,22 +270,41 @@ int main(void)
                     currentGameState = UpdatePlayingState(&game, deltaTime, playerInput, &playerInputEditMode, &wordList);
                 }
 
-                int normalFireAnimationSequence[] = {0, 3, 6, 1, 4}; // sequência de índices
-                int normalFireAnimationLength = sizeof(normalFireAnimationSequence) / sizeof(normalFireAnimationSequence[0]);
+                int normalFireNormalSequence[] = {0, 3, 6, 1, 4}; 
+                int normalFireLowTimerSequence[] = {2, 5, 8};     
+
+                int* currentAnimationSequence = normalFireNormalSequence;
+                int currentAnimationLength = 5; 
+
+                static bool wasLowTimer = false; 
+
+                bool isLowTimer = (game.bombTimer < 5.0f);
+
+                if (isLowTimer) {
+                    currentAnimationSequence = normalFireLowTimerSequence;
+                    currentAnimationLength = 3;
+                }
+
+                if (isLowTimer != wasLowTimer) {
+                    normalFireCurrentFrame = 0; 
+                    normalFireFramesCounter = 0; 
+                }
+                wasLowTimer = isLowTimer; 
+
 
                 normalFireFramesCounter++;
                 if (normalFireFramesCounter >= (60/normalFireFramesSpeed)){
                     normalFireFramesCounter = 0;
-                    normalFireCurrentFrame++; 
+                    normalFireCurrentFrame++;
 
-                    if(normalFireCurrentFrame >= normalFireAnimationLength) { 
+                    if(normalFireCurrentFrame >= currentAnimationLength) {
                         normalFireCurrentFrame = 0;
                     }
 
-                    int currentSpritesheetFrameIndex = normalFireAnimationSequence[normalFireCurrentFrame];
+                    int currentSpritesheetFrameIndex = currentAnimationSequence[normalFireCurrentFrame];
 
-                    normalFireFrameRec.x = (float)(currentSpritesheetFrameIndex % 3) * normalFireFrameRec.width; // coluna
-                    normalFireFrameRec.y = (float)(currentSpritesheetFrameIndex / 3) * normalFireFrameRec.height; // linha
+                    normalFireFrameRec.x = (float)(currentSpritesheetFrameIndex % 3) * normalFireFrameRec.width; // Coluna
+                    normalFireFrameRec.y = (float)(currentSpritesheetFrameIndex / 3) * normalFireFrameRec.height; // Linha
                 }
 
             } break;
