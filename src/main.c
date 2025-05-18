@@ -88,8 +88,7 @@ int main(void)
     bool playerInputEditMode = false;
 
     GameState currentGameState = MENU;
-    int selectedMode = 0; // Adicione esta variável se ela não estiver declarada em game.h
-
+    
     int menuOption = 0;
     const int maxMenuOptions = 3;
 
