@@ -273,6 +273,43 @@ int main(void)
                     currentGameState = UpdatePlayingState(&game, deltaTime, playerInput, &playerInputEditMode, &wordList);
                 }
 
+                int normalFireNormalSequence[] = {0, 3, 6, 1, 4}; 
+                int normalFireLowTimerSequence[] = {2, 5, 8};     
+
+                int* currentAnimationSequence = normalFireNormalSequence;
+                int currentAnimationLength = 5; 
+
+                static bool wasLowTimer = false; 
+
+                bool isLowTimer = (game.bombTimer < 5.0f);
+
+                if (isLowTimer) {
+                    currentAnimationSequence = normalFireLowTimerSequence;
+                    currentAnimationLength = 3;
+                }
+
+                if (isLowTimer != wasLowTimer) {
+                    normalFireCurrentFrame = 0; 
+                    normalFireFramesCounter = 0; 
+                }
+                wasLowTimer = isLowTimer; 
+
+
+                normalFireFramesCounter++;
+                if (normalFireFramesCounter >= (60/normalFireFramesSpeed)){
+                    normalFireFramesCounter = 0;
+                    normalFireCurrentFrame++;
+
+                    if(normalFireCurrentFrame >= currentAnimationLength) {
+                        normalFireCurrentFrame = 0;
+                    }
+
+                    int currentSpritesheetFrameIndex = currentAnimationSequence[normalFireCurrentFrame];
+
+                    normalFireFrameRec.x = (float)(currentSpritesheetFrameIndex % 3) * normalFireFrameRec.width; // Coluna
+                    normalFireFrameRec.y = (float)(currentSpritesheetFrameIndex / 3) * normalFireFrameRec.height; // Linha
+                }
+
             } break;
 
             case GAME_OVER:
@@ -483,8 +520,6 @@ int main(void)
 
                 case PLAYING:
                 {
-                    ClearBackground(GREEN);
-
                     DrawTexture(backgroundTexture, 0, 0, WHITE);
                     Rectangle inputBounds = {currentActualWidth/2 - 150, currentActualHeight - 80, 300, 40 };
                     GuiTextBox(inputBounds, playerInput, MAX_PLAYER_INPUT_CHARS, playerInputEditMode);
@@ -513,13 +548,25 @@ int main(void)
                          TraceLog(LOG_WARNING, "PLAYING: game.currentPlayer is NULL but numPlayers > 0. (Drawing)");
                     }
 
+                    if (normalFireTexture.id != 0) {
+                        Vector2 monsterPosition = {
+                            currentActualWidth / 2.0f - normalFireFrameRec.width / 0.68f,
+                            currentActualHeight / 2.0f - normalFireFrameRec.height / 2.0f
+                        };
+                        float monsterScale = 2.0f;
+                        Rectangle monsterDestRec = {monsterPosition.x, monsterPosition.y, normalFireFrameRec.width * monsterScale, normalFireFrameRec.height * monsterScale};
+                        Vector2 monsterOrigin = {0,0};
+
+                        DrawTexturePro(normalFireTexture, normalFireFrameRec, monsterDestRec, monsterOrigin, 0.0f, WHITE); 
+                    }
+
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", game.bombTimer), (Vector2){currentActualWidth - 180, 10}, 25, 0, (game.bombTimer <= 5.0f ? RED : DARKGRAY));
 
                     if (game.currentSyllable != NULL) {
-                        Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, game.currentSyllable, 60, 0).x/2, currentActualHeight/2 - 80 };
+                        Vector2 syllablePos = {currentActualWidth/2 - MeasureTextEx(textFont, game.currentSyllable, 60, 0).x/2, currentActualHeight/2 - 120 };
                         DrawTextEx(textFont, game.currentSyllable, syllablePos, 60, 0, BLUE);
                     } else {
-                        DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 80}, 30, 0, RED);
+                        DrawTextEx(textFont, "Sem Silaba!", (Vector2){currentActualWidth/2 - MeasureTextEx(textFont, "Sem Silaba!", 30, 0).x/2, currentActualHeight/2 - 120}, 30, 0, RED);
                     }
                 } break;
 
@@ -591,6 +638,7 @@ int main(void)
     if (menuBackgroundTexture.id != 0) UnloadTexture(menuBackgroundTexture);
     if (menuBackgroundTexture.id != 0) UnloadTexture(titleTexture);
     if (playerSprite1.id != 0) UnloadTexture(playerSprite1);
+    if (normalFireTexture.id != 0) UnloadTexture(normalFireTexture);
 
     CloseWindow();
 
