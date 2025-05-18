@@ -38,10 +38,10 @@ void DrawPlayerInfo(const Player* player, Font font, Color textColor, Color life
     if (wizardTexture.id != 0) 
     {
 
-        float offset_y = 25;
+        float offset_y = 0;
 
         Vector2 wizardDrawPos = {
-            player->screenPosition.x - frameRec.width / 2.0f,
+            player->screenPosition.x - frameRec.width / 1.35f,
             namePos.y + MeasureTextEx(font, player->name, 20, 0).y + offset_y
         };
 
