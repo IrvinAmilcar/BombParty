@@ -4,8 +4,6 @@
 #include <math.h>   // Incluir para atan2f, sinf, cosf se usados aqui (não são no seu código atual)
 #include <stdbool.h>
 #include <ctype.h>
-#include <curl/curl.h>
-#include <cJSON.h>
 #include "raylib.h"   // Necessário para TraceLog, TextFormat, GetRandomValue, LOG_* macros
 
 // Includes criados por nós:

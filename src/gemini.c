@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h> // Para free
 #include <string.h> // Para funções de string, como strstr (se necessário para parsing mais complexo)
-
-#include <curl/curl.h>
-#include <cJSON.h>
+#include <string.h>
+#include <curl/include/curl/curl.h>
+#include "cJSON.h"
+#include "gemini.h"
 
 // --- Placeholder para sua chave API ---
 // ATENÇÃO: Substitua isso pela sua chave API real.
