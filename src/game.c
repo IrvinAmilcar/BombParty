@@ -439,55 +439,75 @@ GameState UpdatePlayingState(GameManager* game, float deltaTime, char* playerInp
         // Pass the playerInput and playerInputEditMode pointers to PassTurn
         return PassTurn(game, wordList, playerInput, playerInputEditMode);
     } else {
-         // If the turn didn't end, handle player input while in edit mode
-         if (*playerInputEditMode) {
+        // If the turn didn't end, handle player input while in edit mode
+        if (*playerInputEditMode) {
             SetMouseCursor(MOUSE_CURSOR_IBEAM);
 
+            // --- NOVO: Flag para controlar se um input especial foi tratado neste frame ---
+            bool specialKeyHandledThisFrame = false; // <-- Declare a flag aqui
+
+            // --- Primeira prioridade: Checar teclas de comando (como Power-Up) ---
             if (IsKeyPressed(KEY_ONE)) {
                 // Checar se o jogador atual possui um PowerUp (powerUP > 0)
-                // player->powerUP foi adicionado na struct Player em player.h
                 if (game-> currentPlayer != NULL && game->currentPlayer->powerUP > 0) {
                     TraceLog(LOG_INFO, TextFormat("%s ativou o PowerUp %d!", game->currentPlayer->name, game->currentPlayer->powerUP));
 
                     int usedPowerUpType = game->currentPlayer->powerUP; // Guarda o tipo antes de resetar
                     game->currentPlayer->powerUP = 0; // Consome o PowerUp
                     // Aplica o efeito do PowerUp usado
-                    // applyPowerUp espera GameManager* e Player*
                     applyPowerUp(game, game->currentPlayer, usedPowerUpType);
-                    // Se o PowerUp 3 foi usado, applyPowerUp (via forceTurnEnd)
-                    // setou game->skipToNextPlayer = true. A logica acima vai capturar isso.
-                    // Nenhuma outra acao aqui apos chamar applyPowerUp para PowerUps 1, 2, 4.
 
+                    specialKeyHandledThisFrame = true; // <-- NOVO: Marca que um comando foi processado
                 } else {
-                    // Opcional: feedback para o jogador que nao tem PowerUp
-                    // TraceLog(LOG_INFO, TextFormat("%s tentou usar PowerUp, mas nao tem nenhum.", game->currentPlayer->name));
+                     // Opcional: feedback para o jogador que nao tem PowerUp
+                     // TraceLog(LOG_INFO, TextFormat("%s tentou usar PowerUp, mas nao tem nenhum.", game->currentPlayer->name));
+                     // Como você não quer que o '1' digite NUNCA no input se a tecla for usada como comando,
+                     // mesmo que não tenha power-up, marcamos como tratado.
+                     specialKeyHandledThisFrame = true; // <-- NOVO: Marca como tratado para nao digitar '1'
                 }
             }
+            // Adicione outras verificacoes de teclas de comando aqui com IsKeyPressed antes do proximo bloco if()
 
-            int key = GetCharPressed();
+            // --- Segunda prioridade: Processar input de caracteres normais SOMENTE se nenhum comando foi tratado ---
+            if (!specialKeyHandledThisFrame) { // <-- NOVO: Só processa caracteres se nenhum comando especial foi tratado
+                int key = GetCharPressed();
 
-            while (key > 0) {
-                 if ((key >= 32) && (key <= 126) && (strlen(playerInput) < MAX_PLAYER_INPUT_CHARS)) {
+                // Loop para pegar todos os caracteres digitados no frame
+                while (key > 0) {
+                    // Verifica se o caractere é imprimível (letras, espaco, hifen, etc.)
+                    // e se há espaço no buffer MAX_PLAYER_INPUT_CHARS
+                    if ((key >= 32) && (key <= 126) && (strlen(playerInput) < MAX_PLAYER_INPUT_CHARS)) {
+                        int len = strlen(playerInput);
+                        playerInput[len] = (char)key;
+                        playerInput[len + 1] = '\0'; // Garante que a string esta terminada
+                    }
+                    key = GetCharPressed(); // Pega o proximo caractere (se houver)
+                }
+
+                // Lidar com backspace (Backspace nao é um caractere digitavel, entao nao conflita com GetCharPressed)
+                if (IsKeyPressed(KEY_BACKSPACE)) {
                     int len = strlen(playerInput);
-                    playerInput[len] = (char)key;
-                    playerInput[len + 1] = '\0';
+                    if (len > 0) {
+                        playerInput[len - 1] = '\0'; // Remove o ultimo caractere
+                    }
                 }
-                key = GetCharPressed();
+                // Lidar com ENTER já está sendo feito acima (IsKeyPressed(KEY_ENTER)) antes deste bloco
+            } else {
+                 // NOVO (Opcional mas recomendado): Limpar o buffer de GetCharPressed
+                 // se uma tecla especial foi tratada, para que nenhum caractere
+                 // pressionado junto (ou no mesmo frame) vaze para o proximo frame
+                 // do input de texto.
+                 while(GetCharPressed() > 0) {}
             }
 
-             if (IsKeyPressed(KEY_BACKSPACE)) {
-                int len = strlen(playerInput);
-                if (len > 0) {
-                    playerInput[len - 1] = '\0';
-                }
-            }
-        } else {
+
+        } else { // If not in edit mode (e.g., when not player's turn or game paused)
             SetMouseCursor(MOUSE_CURSOR_DEFAULT);
         }
     }
 
 
-    return PLAYING;
+    return PLAYING; // Retorna o estado atual (continua PLAYING se o turno nao terminou)
 }
 
 // --- Placeholder para outras funções de estado (Implementar em arquivos separados se o projeto crescer) ---
