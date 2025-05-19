@@ -29,10 +29,10 @@ int framesCounter = 0;
 int framesSpeed = 8;
 Texture2D playerSprite1 = {0};
 
-Rectangle normalFireFrameRec = { 0.0f, 0.0f, 0.0f, 0.0f }; 
-int normalFireCurrentFrame = 0; 
+Rectangle normalFireFrameRec = { 0.0f, 0.0f, 0.0f, 0.0f };
+int normalFireCurrentFrame = 0;
 int normalFireFramesCounter = 0;
-int normalFireFramesSpeed = 8; 
+int normalFireFramesSpeed = 8;
 Texture2D normalFireTexture = {0};
 
 int main(void)
@@ -48,7 +48,7 @@ int main(void)
     InitAudioDevice();
 
     Sound sound = LoadSound("resources/audio/magicParty.mp3");
-    
+
     char name[MAX_INPUT_CHARS + 1] = "\0";
     int letterCount = 0;
 
@@ -127,7 +127,6 @@ int main(void)
 
     while (!WindowShouldClose())
     {
-        //ToggleFullscreen();
         int currentActualWidth = GetScreenWidth();
         int currentActualHeight = GetScreenHeight();
 
@@ -223,24 +222,20 @@ int main(void)
 
                 if (mouseOnText)
                 {
-                    // Set the window's cursor to the I-Beam
                     SetMouseCursor(MOUSE_CURSOR_IBEAM);
 
-                    // Get char pressed (unicode character) on the queue
                     int key = GetCharPressed();
 
-                    // Check if more characters have been pressed on the same frame
                     while (key > 0)
                     {
-                        // NOTE: Only allow keys in range [32..125]
                         if ((key >= 32) && (key <= 125) && (letterCount < MAX_INPUT_CHARS))
                         {
                             name[letterCount] = (char)key;
-                            name[letterCount+1] = '\0'; // Add null terminator at the end of the string.
+                            name[letterCount+1] = '\0';
                             letterCount++;
                         }
 
-                        key = GetCharPressed();  // Check next character in the queue
+                        key = GetCharPressed();
                     }
 
                     if (IsKeyPressed(KEY_BACKSPACE))
@@ -257,7 +252,6 @@ int main(void)
 
                 if (IsKeyPressed(KEY_ENTER))
                 {
-                    //Adicionar a função da ia
                     generate_word_list(name, "resources/data/palavras_da_ia.txt");
                     currentGameState = PLAYING;
                 }
@@ -283,13 +277,13 @@ int main(void)
                     currentGameState = UpdatePlayingState(&game, deltaTime, playerInput, &playerInputEditMode, &wordList);
                 }
 
-                int normalFireNormalSequence[] = {0, 3, 6, 1, 4}; 
-                int normalFireLowTimerSequence[] = {2, 5, 8};     
+                int normalFireNormalSequence[] = {0, 3, 6, 1, 4};
+                int normalFireLowTimerSequence[] = {2, 5, 8};
 
                 int* currentAnimationSequence = normalFireNormalSequence;
-                int currentAnimationLength = 5; 
+                int currentAnimationLength = 5;
 
-                static bool wasLowTimer = false; 
+                static bool wasLowTimer = false;
 
                 bool isLowTimer = (game.bombTimer < 5.0f);
 
@@ -299,10 +293,10 @@ int main(void)
                 }
 
                 if (isLowTimer != wasLowTimer) {
-                    normalFireCurrentFrame = 0; 
-                    normalFireFramesCounter = 0; 
+                    normalFireCurrentFrame = 0;
+                    normalFireFramesCounter = 0;
                 }
-                wasLowTimer = isLowTimer; 
+                wasLowTimer = isLowTimer;
 
 
                 normalFireFramesCounter++;
@@ -316,8 +310,8 @@ int main(void)
 
                     int currentSpritesheetFrameIndex = currentAnimationSequence[normalFireCurrentFrame];
 
-                    normalFireFrameRec.x = (float)(currentSpritesheetFrameIndex % 3) * normalFireFrameRec.width; // Coluna
-                    normalFireFrameRec.y = (float)(currentSpritesheetFrameIndex / 3) * normalFireFrameRec.height; // Linha
+                    normalFireFrameRec.x = (float)(currentSpritesheetFrameIndex % 3) * normalFireFrameRec.width;
+                    normalFireFrameRec.y = (float)(currentSpritesheetFrameIndex / 3) * normalFireFrameRec.height;
                 }
 
             } break;
@@ -346,41 +340,11 @@ int main(void)
             } break;
 
             case CREDITS:
-                {
-                    ClearBackground(GRAY);
-                    const char* creditsTitle = "CREDITOS";
-                    Vector2 creditsTitlePos = {GetScreenWidth()/2 - MeasureText(creditsTitle, 40)/2, GetScreenHeight()/3};
-                    DrawText(creditsTitle, creditsTitlePos.x, creditsTitlePos.y, 40, BLACK);
-
-                    // --- Nomes dos Integrantes do Grupo ---
-                    const char* groupMembers[] = {
-                        "Henrique Figueredo Tefile Filho",
-                        "Irvin Amilcar de Farias Botelho da Silva",
-                        "Vinícius Bernardo da Silva",
-                        // Adicione mais nomes conforme necessário
-                    };
-                    int numMembers = sizeof(groupMembers) / sizeof(groupMembers[0]);
-
-                    // Posição inicial para desenhar os nomes (abaixo do título)
-                    int startY = creditsTitlePos.y + 40 + 30; // Título Y + Altura do Título + Espaço
-                    int textFontSize = 25; // Tamanho da fonte para os nomes
-                    int verticalSpacing = 30; // Espaço vertical entre os nomes
-
-                    // Desenha cada nome
-                    for (int i = 0; i < numMembers; ++i) {
-                        const char* memberName = groupMembers[i];
-                        int nameTextWidth = MeasureText(memberName, textFontSize);
-                        Vector2 namePos = {GetScreenWidth()/2 - nameTextWidth/2, startY + i * verticalSpacing};
-                        DrawText(memberName, namePos.x, namePos.y, textFontSize, BLACK);
-                    }
-                    // --- Fim Nomes dos Integrantes ---
-
-
-                    DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
-                    if (IsKeyPressed(KEY_BACKSPACE)) {
-                        currentGameState = MENU;
-                    }
-                } break;
+            {
+                if (IsKeyPressed(KEY_BACKSPACE)) {
+                    currentGameState = MENU;
+                }
+            } break;
 
             default: break;
         }
@@ -438,18 +402,15 @@ int main(void)
                         DrawPlayerInfo(player, textFont, nameColor, lifeColor, playerSprite1, frameRec);
 
                         if (currentGameState == PLAYING && player->powerUP > 0) {
-                            char powerUpText[2]; // Para armazenar o número do power up (ex: "1", "2", etc.) + null terminator
+                            char powerUpText[2];
                             snprintf(powerUpText, sizeof(powerUpText), "%d", player->powerUP);
 
-                            // Posição para desenhar o número do power up
-                            // Exemplo: Acima e um pouco à direita do nome do jogador
                              Vector2 powerUpPos = {
-                                 player->screenPosition.x + MeasureTextEx(textFont, player->name, 20, 0).x / 2.0f + 5, // 5 pixels à direita do centro do nome
-                                 player->screenPosition.y - 45 // 45 pixels acima da posição central do jogador
+                                 player->screenPosition.x + MeasureTextEx(textFont, player->name, 20, 0).x / 2.0f + 5,
+                                 player->screenPosition.y - 45
                              };
 
-                            // Desenhar o texto do power up
-                            DrawTextEx(textFont, powerUpText, powerUpPos, 20, 0, YELLOW); // Cor amarela para destacar
+                            DrawTextEx(textFont, powerUpText, powerUpPos, 20, 0, YELLOW);
                         }
                     }
                 }
@@ -464,23 +425,23 @@ int main(void)
                 {
 
                     if (titleTexture.id != 0) {
-                        float targetWidth = GetScreenWidth() * 0.3f; 
-                        float scale = targetWidth / titleTexture.width; 
+                        float targetWidth = GetScreenWidth() * 0.3f;
+                        float scale = targetWidth / titleTexture.width;
 
                         float titleWidthScaled = titleTexture.width * scale;
                         float titleHeightScaled = titleTexture.height * scale;
 
                         Vector2 titlePos = {
                             GetScreenWidth()/2.0f - titleWidthScaled/2.0f,
-                            GetScreenHeight()/16.0f 
+                            GetScreenHeight()/16.0f
                         };
 
                         DrawTexturePro(titleTexture,
-                                       (Rectangle){0, 0, (float)titleTexture.width, (float)titleTexture.height}, 
-                                       (Rectangle){titlePos.x, titlePos.y, titleWidthScaled, titleHeightScaled}, 
-                                       (Vector2){0,0}, // origem para rotação
-                                       0.0f, // rotação
-                                       WHITE); // cor
+                                       (Rectangle){0, 0, (float)titleTexture.width, (float)titleTexture.height},
+                                       (Rectangle){titlePos.x, titlePos.y, titleWidthScaled, titleHeightScaled},
+                                       (Vector2){0,0},
+                                       0.0f,
+                                       WHITE);
 
                     }
 
@@ -538,10 +499,8 @@ int main(void)
                 case TOPIC_INPUT:
                 {
                     int startY = 120;
-                    // --- Adicionar o input de texto aqui ---
 
-                    // Posição e tamanho da caixa de texto (ajuste conforme necessário)
-                    Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 }; // Posicionado abaixo das opções de modo
+                    Rectangle nameInputBox = { GetScreenWidth()/2.0f - 150, startY + 2 * 40 + 50, 300, 50 };
 
                     DrawText("Digite o tema da partida:", GetScreenWidth()/2 - MeasureText("Digite o tema da partida:", 20)/2, nameInputBox.y - 30, 20, RAYWHITE);
 
@@ -567,7 +526,6 @@ int main(void)
                          DrawText("Máximo de caracteres atingido", GetScreenWidth()/2 - MeasureText("Máximo de caracteres atingido", 20)/2, nameInputBox.y + nameInputBox.height + 10, 20, GRAY);
                     }
 
-                    // --- Fim do input de texto ---
                 }break;
 
                 case PLAYING:
@@ -585,7 +543,7 @@ int main(void)
                         Rectangle monsterDestRec = {monsterPosition.x, monsterPosition.y, normalFireFrameRec.width * monsterScale, normalFireFrameRec.height * monsterScale};
                         Vector2 monsterOrigin = {0,0};
 
-                        DrawTexturePro(normalFireTexture, normalFireFrameRec, monsterDestRec, monsterOrigin, 0.0f, WHITE); 
+                        DrawTexturePro(normalFireTexture, normalFireFrameRec, monsterDestRec, monsterOrigin, 0.0f, WHITE);
                     }
 
                     DrawTextEx(textFont, TextFormat("Timer: %.1f", game.bombTimer), (Vector2){currentActualWidth - 180, 10}, 25, 0, (game.bombTimer <= 5.0f ? RED : DARKGRAY));
@@ -638,8 +596,28 @@ int main(void)
 
                 case CREDITS:
                 {
-                    ClearBackground(GRAY);
-                    DrawText("CREDITOS", GetScreenWidth()/2 - MeasureText("CREDITOS", 40)/2, GetScreenHeight()/3, 40, BLACK);
+                    const char* creditsTitle = "CREDITOS";
+                    Vector2 creditsTitlePos = {GetScreenWidth()/2 - MeasureText(creditsTitle, 40)/2, GetScreenHeight()/3};
+                    DrawText(creditsTitle, creditsTitlePos.x, creditsTitlePos.y, 40, BLACK);
+
+                    const char* groupMembers[] = {
+                        "Henrique Figueredo Tefile Filho",
+                        "Irvin Amilcar de Farias Botelho da Silva",
+                        "Vinícius Bernardo da Silva",
+                    };
+                    int numMembers = sizeof(groupMembers) / sizeof(groupMembers[0]);
+
+                    int startY = creditsTitlePos.y + 40 + 30;
+                    int textFontSize = 25;
+                    int verticalSpacing = 30;
+
+                    for (int i = 0; i < numMembers; ++i) {
+                        const char* memberName = groupMembers[i];
+                        int nameTextWidth = MeasureText(memberName, textFontSize);
+                        Vector2 namePos = {GetScreenWidth()/2 - nameTextWidth/2, startY + i * verticalSpacing};
+                        DrawText(memberName, namePos.x, namePos.y, textFontSize, BLACK);
+                    }
+
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
                 } break;
 
