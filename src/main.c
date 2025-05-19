@@ -392,6 +392,21 @@ int main(void)
                         }
 
                         DrawPlayerInfo(player, textFont, nameColor, lifeColor, playerSprite1, frameRec);
+
+                        if (currentGameState == PLAYING && player->powerUP > 0) {
+                            char powerUpText[2]; // Para armazenar o número do power up (ex: "1", "2", etc.) + null terminator
+                            snprintf(powerUpText, sizeof(powerUpText), "%d", player->powerUP);
+
+                            // Posição para desenhar o número do power up
+                            // Exemplo: Acima e um pouco à direita do nome do jogador
+                             Vector2 powerUpPos = {
+                                 player->screenPosition.x + MeasureTextEx(textFont, player->name, 20, 0).x / 2.0f + 5, // 5 pixels à direita do centro do nome
+                                 player->screenPosition.y - 45 // 45 pixels acima da posição central do jogador
+                             };
+
+                            // Desenhar o texto do power up
+                            DrawTextEx(textFont, powerUpText, powerUpPos, 20, 0, YELLOW); // Cor amarela para destacar
+                        }
                     }
                 }
 
