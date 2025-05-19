@@ -1,12 +1,12 @@
-# BombParty💣💣💣
-Bomb Party é um jogo multijogador local com uma gameplay simples, divertida e desafiadora. O objetivo é escrever, o mais rápido possível, palavras que contenham a sílaba sorteada. Quem errar ou demorar demais...  — e a bomba estourou!
+# Magic Party💣💣💣
+Magic Party é um jogo multijogador local com uma gameplay simples, divertida e desafiadora. O objetivo é escrever, o mais rápido possível, palavras que contenham a sílaba sorteada. Quem errar ou demorar demais...  — e a bomba estourou!
 
 # Conceito 🧠
 - A cada rodada, uma sílaba aleatória é exibida na tela.
 - Os jogadores devem digitar uma palavra válida que contenha essa sílaba.
 - Palavras repetidas não são permitidas.
-- Quem não responder a tempo e a bomba estourar é ELIMINADO.
-- Conforme as rodadas avançam, silabas maiores aparecem.
+- Quem não responder a tempo e a bomba estourar perde uma vida.
+- Ao perder todas as vidas, o jogador é eliminado.
 - O último jogador restante vence!
 
 # Tecnologias utilizadas 🛠️
