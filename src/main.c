@@ -35,8 +35,6 @@ int normalFireFramesCounter = 0;
 int normalFireFramesSpeed = 8; 
 Texture2D normalFireTexture = {0};
 
-
-
 int main(void)
 {
     int display = GetCurrentMonitor();
@@ -75,6 +73,7 @@ int main(void)
     Texture2D menuBackgroundTexture = {0};
     Texture2D titleTexture = {0};
     Texture2D backgroundTexture = {0};
+    Texture2D backgroundTransitionsTexture = {0};
 
     normalModeBackgroundTexture = LoadTexture("resources/textures/normalModeBackground.jpg");
     if (normalModeBackgroundTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load normalModeBackground texture.");
@@ -84,6 +83,9 @@ int main(void)
 
     titleTexture = LoadTexture("resources/textures/title.png");
     if (titleTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load title texture.");
+
+    backgroundTransitionsTexture = LoadTexture("resources/textures/backgroundTransitions.jpeg");
+    if (backgroundTransitionsTexture.id == 0) TraceLog(LOG_WARNING, "Failed to load backgroundTransitions texture.");
 
 
     normalFireTexture = LoadTexture("resources/textures/normalFire.png");
@@ -360,7 +362,9 @@ int main(void)
             if (currentGameState == MENU) {
                 backgroundToDraw = menuBackgroundTexture;
             } else if (currentGameState == PLAYING || currentGameState == GAME_OVER) {
-                 backgroundToDraw = normalModeBackgroundTexture;
+                backgroundToDraw = normalModeBackgroundTexture;
+            } else if (currentGameState == SELECT_PLAYERS || currentGameState == SELECT_MODE || currentGameState == TOPIC_INPUT || currentGameState == LEADERBOARD || currentGameState == CREDITS) {
+                backgroundToDraw = backgroundTransitionsTexture;
             }
 
             if (backgroundToDraw.id != 0) {
@@ -463,7 +467,6 @@ int main(void)
 
                 case SELECT_PLAYERS:
                 {
-                    ClearBackground(BLACK);
                     const char* selectPlayersTitle = "Selecione o número de jogadores";
                     Vector2 selectPlayersTitlePos = {GetScreenWidth()/2 - MeasureText(selectPlayersTitle, 30)/2, 50};
                     DrawText(selectPlayersTitle, selectPlayersTitlePos.x, selectPlayersTitlePos.y, 30, RAYWHITE);
@@ -482,8 +485,6 @@ int main(void)
 
                 case SELECT_MODE:
                 {
-                    ClearBackground(DARKGRAY);
-
                     const char* selectModeTitle = "Selecione o modo de jogo";
                     Vector2 selectModeTitlePos = {GetScreenWidth()/2 - MeasureText(selectModeTitle, 30)/2, 50};
                     DrawText(selectModeTitle, selectModeTitlePos.x, selectModeTitlePos.y, 30, RAYWHITE);
@@ -506,8 +507,6 @@ int main(void)
 
                 case TOPIC_INPUT:
                 {
-                    ClearBackground(GREEN);
-
                     int startY = 120;
                     // --- Adicionar o input de texto aqui ---
 
@@ -604,13 +603,11 @@ int main(void)
 
                 case LEADERBOARD:
                 {
-                    ClearBackground(RAYWHITE);
                     DrawLeaderboard(textFont, currentActualWidth, currentActualHeight);
                 } break;
 
                 case CREDITS:
                 {
-                    ClearBackground(GRAY);
                     DrawText("CREDITOS", GetScreenWidth()/2 - MeasureText("CREDITOS", 40)/2, GetScreenHeight()/3, 40, BLACK);
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
                 } break;
@@ -637,6 +634,7 @@ int main(void)
     if (menuBackgroundTexture.id != 0) UnloadTexture(titleTexture);
     if (playerSprite1.id != 0) UnloadTexture(playerSprite1);
     if (normalFireTexture.id != 0) UnloadTexture(normalFireTexture);
+    if (backgroundTransitionsTexture.id != 0) UnloadTexture(backgroundTransitionsTexture);
 
     CloseAudioDevice();
     CloseWindow();
