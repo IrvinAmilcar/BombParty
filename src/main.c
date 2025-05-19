@@ -35,6 +35,8 @@ int normalFireFramesCounter = 0;
 int normalFireFramesSpeed = 8; 
 Texture2D normalFireTexture = {0};
 
+
+
 int main(void)
 {
     int display = GetCurrentMonitor();
@@ -45,6 +47,10 @@ int main(void)
 
     InitWindow(initialScreenWidth, initialScreenHeight, "BombParty");
     ToggleFullscreen();
+    InitAudioDevice();
+
+    Sound sound = LoadSound("resources/audio/magicParty.mp3");
+    
     char name[MAX_INPUT_CHARS + 1] = "\0";
     int letterCount = 0;
 
@@ -126,6 +132,10 @@ int main(void)
         playerPositionsCenter = (Vector2){ currentActualWidth / 2.0f, currentActualHeight / 2.0f };
 
         float deltaTime = GetFrameTime();
+
+        if (!IsSoundPlaying(sound)) {
+            PlaySound(sound);
+        }
 
         switch (currentGameState)
         {
@@ -628,6 +638,7 @@ int main(void)
     if (playerSprite1.id != 0) UnloadTexture(playerSprite1);
     if (normalFireTexture.id != 0) UnloadTexture(normalFireTexture);
 
+    CloseAudioDevice();
     CloseWindow();
 
     return 0;
