@@ -174,6 +174,7 @@ void InitializeGame(GameManager* game, int numInitialPlayers, float initialBombT
         playersArray[i].screenPosition = (Vector2){0, 0};
         playersArray[i].originalIndex = i;
         playersArray[i].score = 0;
+        playersArray[i].powerUP = 0;
 
         playersArray[i].next = NULL;
         playersArray[i].prev = NULL;
