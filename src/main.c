@@ -346,11 +346,41 @@ int main(void)
             } break;
 
             case CREDITS:
-            {
-                if (IsKeyPressed(KEY_BACKSPACE)) {
-                    currentGameState = MENU;
-                }
-            } break;
+                {
+                    ClearBackground(GRAY);
+                    const char* creditsTitle = "CREDITOS";
+                    Vector2 creditsTitlePos = {GetScreenWidth()/2 - MeasureText(creditsTitle, 40)/2, GetScreenHeight()/3};
+                    DrawText(creditsTitle, creditsTitlePos.x, creditsTitlePos.y, 40, BLACK);
+
+                    // --- Nomes dos Integrantes do Grupo ---
+                    const char* groupMembers[] = {
+                        "Henrique Figueredo Tefile Filho",
+                        "Irvin Amilcar de Farias Botelho da Silva",
+                        "Vinícius Bernardo da Silva",
+                        // Adicione mais nomes conforme necessário
+                    };
+                    int numMembers = sizeof(groupMembers) / sizeof(groupMembers[0]);
+
+                    // Posição inicial para desenhar os nomes (abaixo do título)
+                    int startY = creditsTitlePos.y + 40 + 30; // Título Y + Altura do Título + Espaço
+                    int textFontSize = 25; // Tamanho da fonte para os nomes
+                    int verticalSpacing = 30; // Espaço vertical entre os nomes
+
+                    // Desenha cada nome
+                    for (int i = 0; i < numMembers; ++i) {
+                        const char* memberName = groupMembers[i];
+                        int nameTextWidth = MeasureText(memberName, textFontSize);
+                        Vector2 namePos = {GetScreenWidth()/2 - nameTextWidth/2, startY + i * verticalSpacing};
+                        DrawText(memberName, namePos.x, namePos.y, textFontSize, BLACK);
+                    }
+                    // --- Fim Nomes dos Integrantes ---
+
+
+                    DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
+                    if (IsKeyPressed(KEY_BACKSPACE)) {
+                        currentGameState = MENU;
+                    }
+                } break;
 
             default: break;
         }
@@ -608,6 +638,7 @@ int main(void)
 
                 case CREDITS:
                 {
+                    ClearBackground(GRAY);
                     DrawText("CREDITOS", GetScreenWidth()/2 - MeasureText("CREDITOS", 40)/2, GetScreenHeight()/3, 40, BLACK);
                     DrawText("<- Voltar (BACKSPACE)", 20, GetScreenHeight() - 30, 20, DARKGRAY);
                 } break;
